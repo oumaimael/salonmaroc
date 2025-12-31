@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cat Adoption</title>
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/navbar.css">
+    <link rel="stylesheet" href="styles/popups.css">
+    <link rel="stylesheet" href="styles/home.css">
+</head>
+
+<body>
+    <!-- Popups -->
+    <div id="popupContainer" class="popup-overlay">
+        <div id="popup" class="popup-box">
+            <div id="popupMessage" class="popup-message"></div>
+            <div class="popup-actions">
+                <button id="popupOk">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmPopup" class="popup-overlay">
+        <div id="confirmBox" class="popup-box">
+            <div id="confirmMessage" class="popup-message"></div>
+            <div class="confirm-actions">
+                <button id="confirmYes">Yes</button>
+                <button id="confirmNo">No</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loginModal" class="popup-overlay">
+        <div id="loginBox" class="popup-box">
+            <h3>Admin Login</h3>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit">Login</button>
+                    <button type="button" id="cancelLogin">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="signupModal" class="popup-overlay">
+        <div id="signupBox" class="popup-box">
+            <h3>Sign Up</h3>
+            <form id="signupForm">
+                <div class="form-group">
+                    <label for="signupUsername">Username:</label>
+                    <input type="text" id="signupUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupEmail">Email:</label>
+                    <input type="email" id="signupEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Password:</label>
+                    <input type="password" id="signupPassword" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit">Sign Up</button>
+                    <button type="button" id="cancelSignup">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <a href="index.html">Cats Adoption</a>
+            </div>
+
+            <!-- Mobile Menu Toggle -->
+            <div class="menu-toggle" id="menuToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+            <div class="nav-links" id="navLinks">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="about.html" class="nav-link">About</a>
+                <a href="contact.html" class="nav-link">Contact</a>
+                <button id="signupBtn" class="nav-login" style="margin-right: 10px;">Sign Up</button>
+                <button id="loginBtn" class="nav-login">login</button>
+                <button id="logoutBtn" class="nav-logout" style="display: none;">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1>Find Your Perfect Salon</h1>
+            <p>Every customer deserves the best care possible</p>
+            <div class="hero-buttons">
+                <a href="#salon-section" class="hero-button salon-btn">Find your Salon</a>
+                <a href="contact.html" class="hero-button contact-btn">Contact Us</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container" id="cats-section">
+        <h1>Salon</h1>
+
+        <!-- Filter and Search Section -->
+        <div class="filter-section">
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Search salons by name or description...">
+            </div>
+            <div class="filter-container">
+                <select id="tagFilter">
+                    <option value="">All Tags</option>
+                </select>
+                <button id="clearFilters">Clear Filters</button>
+            </div>
+        </div>
+
+        <div id="addCatFormContainer" class="admin-only">
+            <button id="showAddFormBtn">Add New Cat</button>
+        </div>
+
+        <div id="grid"></div>
+
+        <!-- Pagination -->
+        <div id="pagination" class="pagination-container"></div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>Salon Maroc</h3>
+                <p>Find beauty salons in morocco</p>
+            </div>
+
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <ul class="footer-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h4>Contact Info</h4>
+                <p>Email: info@catsgallery.ma</p>
+                <p>Phone: +212 522-987-654</p>
+            </div>
+
+            <div class="footer-section">
+                <h4>Follow Us</h4>
+                <p>Stay updated on our rescue efforts.</p>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2025 Salon Maroc. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
