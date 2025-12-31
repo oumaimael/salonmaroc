@@ -64,7 +64,7 @@ app.post('/users', (req, res) => {
 
             if (isMatch) {
                 const token = jwt.sign(
-                    { userId: user.id, username: user.username },  
+                    { userId: user.id_user, username: user.username },  
                     process.env.JWT_SECRET,                        
                     { expiresIn: '2h' }                          
                 );
@@ -72,7 +72,7 @@ app.post('/users', (req, res) => {
                 res.json({
                     message: "Login successful",
                     token: token,  
-                    user: { id: user.id, username: user.username }
+                    user: { id: user.id_user, username: user.username }
                 });
             } else {
                 res.status(401).json({ error: "Incorrect password" });
@@ -113,7 +113,14 @@ app.get('/logout', (req, res) => {
 // --- ROUTES Salon ---
 app.get('/salon', (req, res) => {
     pool.query("SELECT * FROM salon", (err, result) => {
-        if (err) return res.status(500).json({ error: "SQL Error" });
+        if (err) {
+            console.error("SQL Error on /salon route:", err.message);
+            console.error("Full error details:", err);
+            return res.status(500).json({ 
+                error: "SQL Error", 
+                message: err.message 
+            });
+        }
         res.json(result.rows);
     });
 });
