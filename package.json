@@ -1,0 +1,28 @@
+{
+  "name": "salon",
+  "version": "1.0.0",
+  "description": "a crud app with authentification and autorisation as well as JWT for beauty salons in marrakech",
+  "repository": {
+    "type": "git",
+    "url": "salonmaroc"
+  },
+  "license": "ISC",
+  "author": "oumaima",
+  "type": "commonjs",
+  "main": "./app",
+  "scripts": {
+    "start": "nodemon --exec \"node --dns-result-order=ipv4first\" app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.89.0",
+    "bcrypt": "^6.0.0",
+    "body-parser": "^2.2.1",
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mysql": "^2.18.1",
+    "nodemon": "^3.1.11",
+    "pg": "^8.16.3"
+  }
+}
