@@ -9,7 +9,7 @@
   "license": "ISC",
   "author": "oumaima",
   "type": "commonjs",
-  "main": "./app",
+  "main": "./public",
   "scripts": {
     "start": "nodemon --exec \"node --dns-result-order=ipv4first\" app.js",
     "test": "echo \"Error: no test specified\" && exit 1"

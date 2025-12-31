@@ -93,7 +93,15 @@ app.get('/logout', (req, res) => {
 // --- ROUTES Salon ---
 app.get('/salon', (req, res) => {
     pool.query("SELECT * FROM salon", (err, result) => {
-        if (err) return res.status(500).json({ error: "SQL Error" });
+        if (err) {
+            console.error("SQL Error:", err.message);
+            console.error("Full error:", err);
+            return res.status(500).json({ 
+                error: "SQL Error", 
+                message: err.message,
+                details: process.env.NODE_ENV === 'development' ? err : undefined
+            });
+        }
         res.json(result.rows);
     });
 });
