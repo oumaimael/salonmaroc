@@ -3,7 +3,8 @@ const bodyParser = require('body-parser');
 const { Pool } = require('pg');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken'); 
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -73,10 +74,10 @@ app.post('/users', (req, res) => {
 });
 
 app.post('/register', async (req, res) => {
-    const { username, password, email } = req.body;
+    const { name, password, email } = req.body;
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
-        pool.query("INSERT INTO users (username, password, email) VALUES ($1, $2, $3)", [username, hashedPassword, email], (err) => {
+        pool.query("INSERT INTO users (name, password, email) VALUES ($1, $2, $3)", [name, hashedPassword, email], (err) => {
             if (err) return res.status(500).json({ error: "Username already in use" });
             res.json({ message: "User created !" });
         });
@@ -126,18 +127,18 @@ app.put('/salon/:salon_id', (req, res) => {
     const salonId = req.params.salon_id;
     const { name, services, city, m_range_price, review, working_h, status, img } = req.body;
     pool.query(`UPDATE salon SET name = $1, services = $2, city = $3, m_range_price = $4, review = $5, working_h = $6, status = $7, img = $8
-             WHERE id = $9 RETURNING *`, [name, services, city, m_range_price, review, working_h, status, img, salonId]
-        );
+             WHERE id = $9 RETURNING *`, [name, services, city, m_range_price, review, working_h, status, img, salonId],
         (err, result) => {
             if (err) {
                 console.error("SQL Error:", err);
                 return res.status(500).json({ error: "Database error" });
             }
             res.status(201).json({ 
-                message: "Salon created successfully", 
+                message: "Salon updated successfully", 
                 salon: result.rows[0] 
             });
         }
+    );
 });
 
 app.delete('/salon/:salon_id', async (req, res) => {
