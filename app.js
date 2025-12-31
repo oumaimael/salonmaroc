@@ -19,7 +19,7 @@ const pool = new Pool({
 app.use(cors({ origin: true, credentials: true })); 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(express.static('public'));
+app.use(express.static('./public'));
 
 // --- MIDDLEWARE D'AUTHENTIFICATION (JWT) ---
 const checkAuth = (req, res, next) => {
@@ -93,15 +93,7 @@ app.get('/logout', (req, res) => {
 // --- ROUTES Salon ---
 app.get('/salon', (req, res) => {
     pool.query("SELECT * FROM salon", (err, result) => {
-        if (err) {
-            console.error("SQL Error:", err.message);
-            console.error("Full error:", err);
-            return res.status(500).json({ 
-                error: "SQL Error", 
-                message: err.message,
-                details: process.env.NODE_ENV === 'development' ? err : undefined
-            });
-        }
+        if (err) return res.status(500).json({ error: "SQL Error" });
         res.json(result.rows);
     });
 });
