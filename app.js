@@ -21,6 +21,14 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static('./public'));
 
+//--CONFIG FOR SUPABASE-- 
+app.get('/config', (req, res) => {
+    res.json({
+        SUPABASE_URL: process.env.SUPABASE_URL,
+        SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY
+    });
+});
+
 // --- MIDDLEWARE D'AUTHENTIFICATION (JWT) ---
 const checkAuth = (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1]; 
@@ -75,14 +83,26 @@ app.post('/users', (req, res) => {
 
 app.post('/register', async (req, res) => {
     const { name, password, email } = req.body;
+    if (!name || !password || !email) {
+        return res.status(400).json({ error: "All fields are required" });
+    }
+
     try {
+        const existing = await pool.query("SELECT 1 FROM users WHERE name = $1", [name]);
+        if (existing.rows.length > 0) {
+            return res.status(409).json({ error: "Username already in use" });
+        }
+        
         const hashedPassword = await bcrypt.hash(password, 10);
-        pool.query("INSERT INTO users (name, password, email) VALUES ($1, $2, $3)", [name, hashedPassword, email], (err) => {
-            if (err) return res.status(500).json({ error: "Username already in use" });
-            res.json({ message: "User created !" });
-        });
-    } catch (e) { 
-        res.status(500).json({ error: "Error crypting" }); 
+        await pool.query("INSERT INTO users (name, password, email) VALUES ($1, $2, $3)", 
+            [name, hashedPassword, email]);
+        res.json({ message: "User created !" });
+    } catch (e) {
+        if (e.code === '23505') {
+            return res.status(409).json({ error: "Username or email already in use" });
+    }
+        console.error("Registration error:", e);
+        res.status(500).json({ error: "Server error" });
     }
 });
 
@@ -98,9 +118,9 @@ app.get('/salon', (req, res) => {
     });
 });
 
-app.get('/salon/:salon_id', (req, res) => {
-    const salonId = req.params.salon_id;
-    pool.query("SELECT * FROM salon WHERE salon_id = $1 ",[salonId], (err, result) => {
+app.get('/salon/:id_salon', (req, res) => {
+    const salonId = req.params.id_salon;
+    pool.query("SELECT * FROM salon WHERE id_salon = $1 ",[salonId], (err, result) => {
         if (err) return res.status(500).json({ error: "SQL Error" });
         res.json(result.rows);
     });
@@ -123,11 +143,11 @@ app.post('/salon', (req, res) => {
     );
 });
 
-app.put('/salon/:salon_id', (req, res) => {
-    const salonId = req.params.salon_id;
+app.put('/salon/:id_salon', (req, res) => {
+    const salonId = req.params.id_salon;
     const { name, services, city, m_range_price, review, working_h, status, img } = req.body;
     pool.query(`UPDATE salon SET name = $1, services = $2, city = $3, m_range_price = $4, review = $5, working_h = $6, status = $7, img = $8
-             WHERE id = $9 RETURNING *`, [name, services, city, m_range_price, review, working_h, status, img, salonId],
+             WHERE id_salon = $9`, [name, services, city, m_range_price, review, working_h, status, img, salonId],
         (err, result) => {
             if (err) {
                 console.error("SQL Error:", err);
@@ -141,11 +161,11 @@ app.put('/salon/:salon_id', (req, res) => {
     );
 });
 
-app.delete('/salon/:salon_id', async (req, res) => {
+app.delete('/salon/:id_salon', async (req, res) => {
     try {
-        const salonId = req.params.salon_id;
+        const salonId = req.params.id_salon;
         const checkResult = await pool.query(
-            "SELECT id FROM salon WHERE id = $1",
+            "SELECT * FROM salon WHERE id_salon = $1",
             [salonId]
         );
         if (checkResult.rows.length === 0) {
@@ -155,7 +175,7 @@ app.delete('/salon/:salon_id', async (req, res) => {
             });
         }
         await pool.query(
-            "DELETE FROM salon WHERE id = $1",
+            "DELETE FROM salon WHERE id_salon = $1",
             [salonId]
         );
         res.json({
