@@ -23,11 +23,6 @@ async function loadConfig() {
     return response.json();
 }
 
-// Initialize home page
-document.addEventListener("DOMContentLoaded", () => {
-    loadSalons();
-});
-
 // Load salons function
 async function loadSalons() {
     const grid = document.getElementById("grid");
@@ -48,7 +43,7 @@ async function loadSalons() {
             return;
         }
 
-        salons.forEach(salon => {
+        salons.forEach((salon) => {
             const card = document.createElement("div");
             card.className = "card";
             card.innerHTML = `
@@ -56,7 +51,9 @@ async function loadSalons() {
                     <h3>${salon.name}</h3>
                 </div>
                 <div class="card-body">
-                    <img src="${salon.img}" alt="${salon.name} Image" style="width:100%; height:auto;"/>
+                    <div class="image-container">
+                        <img src="${salon.img}" alt="${salon.name} Image" class="salon-image"/>
+                    </div>
                     <p><strong>Location:</strong> ${salon.city}</p>
                     <p><strong>Services:</strong> ${salon.services}</p>
                     <p><strong>Medium range price:</strong> ${salon.m_range_price}</p>
@@ -76,3 +73,4 @@ async function loadSalons() {
         console.error("Error:", error);
     }
 }
+
