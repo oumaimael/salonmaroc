@@ -15,7 +15,7 @@ const pool = new Pool({
     ssl: { rejectUnauthorized: false } 
 });
 
-// --- MIDDLEWARES ---
+// --- MIDDLEWARES---
 app.use(cors({ origin: true, credentials: true })); 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -239,6 +239,6 @@ app.delete("/fav_salon/:id_salon", checkAuth, (req, res) => {
 });
 
 // Lancer le serveur
-app.listen(port, '0.0.0.0', () => {
+app.listen(port, () => {
     console.log(`Server active on port ${port}`);
 });

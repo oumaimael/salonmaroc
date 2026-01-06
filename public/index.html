@@ -29,17 +29,18 @@
         </div>
     </div>
 
+    <!-- Login Modal -->
     <div id="loginModal" class="popup-overlay">
         <div id="loginBox" class="popup-box">
             <h3>Admin Login</h3>
             <form id="loginForm">
                 <div class="form-group">
-                    <label for="username">Username:</label>
-                    <input type="text" id="username" required>
+                    <label for="loginEmail">Email:</label>
+                    <input type="email" id="loginEmail" placeholder="Enter your email" required>
                 </div>
                 <div class="form-group">
-                    <label for="password">Password:</label>
-                    <input type="password" id="password" required>
+                    <label for="loginPassword">Password:</label>
+                    <input type="password" id="loginPassword" placeholder="Enter your password" required>
                 </div>
                 <div class="form-actions">
                     <button type="submit">Login</button>
@@ -55,15 +56,15 @@
             <form id="signupForm">
                 <div class="form-group">
                     <label for="signupUsername">Username:</label>
-                    <input type="text" id="signupUsername" required>
+                    <input type="text" id="signupUsername" placeholder="Choose a username" required>
                 </div>
                 <div class="form-group">
                     <label for="signupEmail">Email:</label>
-                    <input type="email" id="signupEmail" required>
+                    <input type="email" id="signupEmail" placeholder="Enter your email" required>
                 </div>
                 <div class="form-group">
                     <label for="signupPassword">Password:</label>
-                    <input type="password" id="signupPassword" required>
+                    <input type="password" id="signupPassword" placeholder="Create a password" required>
                 </div>
                 <div class="form-actions">
                     <button type="submit">Sign Up</button>
@@ -73,6 +74,55 @@
         </div>
     </div>
 
+    <!-- Add/Edit Salon Modal -->
+    <div id="salonFormModal" class="popup-overlay">
+        <div id="salonFormBox" class="popup-box large-form">
+            <h3 id="formTitle">Add New Salon</h3>
+            <form id="salonForm">
+                <div class="form-group">
+                    <label for="salonName">Salon Name:</label>
+                    <input type="text" id="salonName" placeholder="Salon name" required>
+                </div>
+                <div class="form-group">
+                    <label for="salonServices">Services:</label>
+                    <input type="text" id="salonServices" placeholder="e.g., Hair Cutting, Makeup, Spa" required>
+                </div>
+                <div class="form-group">
+                    <label for="salonCity">City:</label>
+                    <input type="text" id="salonCity" placeholder="e.g., Marrakech" required>
+                </div>
+                <div class="form-group">
+                    <label for="salonPrice">Average Price Range:</label>
+                    <input type="text" id="salonPrice" placeholder="e.g., 150-300 DH" required>
+                </div>
+                <div class="form-group">
+                    <label for="salonRating">Rating (1-5):</label>
+                    <input type="number" id="salonRating" min="1" max="5" step="0.1" placeholder="4.5" required>
+                </div>
+                <div class="form-group">
+                    <label for="salonHours">Working Hours:</label>
+                    <input type="text" id="salonHours" placeholder="e.g., 9:00 AM - 6:00 PM" required>
+                </div>
+                <div class="form-group">
+                    <label for="salonStatus">Status:</label>
+                    <select id="salonStatus" required>
+                        <option value="open">Open</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="salonImage">Image URL:</label>
+                    <input type="url" id="salonImage" placeholder="https://example.com/image.jpg" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" id="submitSalonBtn">Add Salon</button>
+                    <button type="button" id="cancelSalonForm">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-logo">
@@ -91,7 +141,7 @@
                 <a href="about.html" class="nav-link">About</a>
                 <a href="contact.html" class="nav-link">Contact</a>
                 <button id="signupBtn" class="nav-login" style="margin-right: 10px;">Sign Up</button>
-                <button id="loginBtn" class="nav-login">login</button>
+                <button id="loginBtn" class="nav-login">Login</button>
                 <button id="logoutBtn" class="nav-logout" style="display: none;">Logout</button>
             </div>
         </div>
@@ -103,19 +153,20 @@
             <h1>Find Your Perfect Salon</h1>
             <p>Every customer deserves the best care possible</p>
             <div class="hero-buttons">
-                <a href="#salon-section" class="hero-button salon-btn">Find your Salon</a>
-                <a href="contact.html" class="hero-button contact-btn">Contact Us</a>
+                <a href="#salon-section" class="hero-button salon-btn">Browse Salons</a>
+                <button id="scrapingBtn" class="hero-button contact-btn" style="cursor: pointer;">Find Salons</button>
             </div>
         </div>
     </div>
 
+    <!-- Main Content -->
     <div class="main-container" id="salon-section">
         <h1>Salon</h1>
 
         <!-- Filter and Search Section -->
         <div class="filter-section">
             <div class="search-container">
-                <input type="text" id="searchInput" placeholder="Search salons by name or description...">
+                <input type="text" id="searchInput" placeholder="Search salons by name, city, or services...">
             </div>
             <div class="filter-container">
                 <select id="tagFilter">

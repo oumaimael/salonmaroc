@@ -1,4 +1,4 @@
-// Supabase Configuration
+// ===== Configuration =====
 let SUPABASE_URL = "";
 let SUPABASE_ANON_KEY = "";
 
@@ -64,8 +64,8 @@ async function loadSalons() {
                     <p><strong>Working hours:</strong> ${salon.working_h}</p>
                     <p><strong>Status:</strong> ${salon.status}</p>
                     <div class="card-actions">
-                        <button class="edit-btn" onclick="editSalon(${salon.id})">Edit</button>
-                        <button class="delete-btn" onclick="deleteSalon(${salon.id})">Delete</button>
+                        <button class="edit-btn" onclick="editSalon(${salon.id_salon})">Edit</button>
+                        <button class="delete-btn" onclick="deleteSalon(${salon.id_salon})">Delete</button>
                     </div>
                 </div>
             `;
