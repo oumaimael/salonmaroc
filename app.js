@@ -135,14 +135,23 @@ app.get('/salon/:id_salon', (req, res) => {
     });
 });
 
-app.post('/salon', (req, res) => {
+app.post('/salon', checkAuth, (req, res) => {
     const { name, services, city, m_range_price, review, working_h, status, img } = req.body;
-    pool.query("INSERT INTO salon (name, services, city, m_range_price, review, working_h ,status, img ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
-        [name, services, city, m_range_price, review, working_h ,status, img],
+    
+    // Validate required fields
+    if (!name || !services || !city || !m_range_price || !review || !working_h || !status || !img) {
+        return res.status(400).json({ error: "All fields are required" });
+    }
+    
+    const servicesArray = services.split(',').map(s => s.trim());
+    const workingHoursJson = JSON.stringify(working_h);
+    
+    pool.query("INSERT INTO salon (name, services, city, m_range_price, review, working_h, status, img) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
+        [name, servicesArray, city, m_range_price, parseFloat(review), workingHoursJson, status, img],
         (err, result) => {
             if (err) {
                 console.error("SQL Error:", err);
-                return res.status(500).json({ error: "Database error" });
+                return res.status(500).json({ error: "Database error: " + err.message });
             }
             res.status(201).json({ 
                 message: "Salon created successfully", 

@@ -104,8 +104,7 @@ function setupEventListeners() {
     const showAddFormBtn = document.getElementById("showAddFormBtn");
     const cancelSalonForm = document.getElementById("cancelSalonForm");
     const salonForm = document.getElementById("salonForm");
-    const editSalonBtn = document.getElementsByClassName("edit-btn");
-    const deleteSalonBtn = document.getElementsByClassName("delete-btn");
+
     
     if (showAddFormBtn) {
         showAddFormBtn.addEventListener("click", openSalonFormModal);
@@ -119,13 +118,7 @@ function setupEventListeners() {
         salonForm.addEventListener("submit", AddSalon);
     }
 
-    if (editSalonBtn) {
-        editSalonBtn.addEventListener("click", editSalon);
-    }
 
-    if (deleteSalonBtn) {
-        deleteSalonBtn.addEventListener("click", deleteSalon);
-    }
     
     // Popup OK button - using event delegation
     document.addEventListener("click", function(e) {
@@ -187,7 +180,7 @@ async function loadSalons() {
                         <img src="${salon.img}" alt="${salon.name} Image" class="salon-image"/>
                     </div>
                     <p><strong>Location:</strong> ${salon.city}</p>
-                    <p><strong>Services:</strong> ${salon.services}</p>
+                    <p><strong>Services:</strong> ${Array.isArray(salon.services) ? salon.services.join(', ') : salon.services}</p>
                     <p><strong>Medium range price:</strong> ${salon.m_range_price}</p>
                     <p><strong>Review:</strong> ${salon.review}</p>
                     <p><strong>Working hours:</strong> ${salon.working_h}</p>
@@ -211,15 +204,7 @@ async function AddSalon(e) {
     authToken = localStorage.getItem("authToken");
     
     if (!authToken) {
-        const popup = document.getElementByClass("popup-overlay");
-            if (popup) {
-            const message = popup.querySelector(".popup-message");
-        
-                if (message) {
-                    message.textContent = "Please login to continue!";
-                }
-            popup.classList.add("active");
-            }
+        showPopup("Please login to continue!");
         return;
     }
     
@@ -235,7 +220,7 @@ async function AddSalon(e) {
     };
     
     try {
-        const response = await fetch("http://localhost:5000/salon", {
+        const response = await fetch("/salon", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

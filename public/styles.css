@@ -655,6 +655,10 @@ body {
     box-shadow: 0 6px 20px rgba(44, 62, 80, 0.3);
 }
 
+.showAddFormBtn {
+    display: none;
+}
+
 /* ===== Favorites Heart Icon ===== */
 .favorite-btn {
     background: none;
