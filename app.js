@@ -112,22 +112,6 @@ app.get('/logout', (req, res) => {
 
 // --- ROUTES Salon ---
 
-/*
-app.get('/salon', async (req, res) => {
-    try {
-        const { data, error } = await supabase
-            .from('salon') // Fixed table name
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        res.json(data);
-    } catch (err) {
-        console.error('Supabase Error:', err.message);
-        res.status(500).json({ error: err.message });
-    }
-});
-*/
 app.get('/salon', (req, res) => {
     pool.query("SELECT * FROM salon", (err, result) => {
         if (err) {
