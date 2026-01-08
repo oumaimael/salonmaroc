@@ -4,6 +4,7 @@ const { Pool } = require('pg');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 const app = express();
@@ -27,6 +28,93 @@ app.get('/config', (req, res) => {
         SUPABASE_URL: process.env.SUPABASE_URL,
         SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY
     });
+});
+
+// --- CONFIGURE NODEMAILER ---
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.GMAIL_USER,  // Your Gmail address
+        pass: process.env.GMAIL_PASS   // Your Gmail app password (NOT regular password)
+    }
+});
+
+// --- CONTACT FORM ENDPOINT ---
+app.post('/contact', async (req, res) => {
+    try {
+        const { name, email, subject, message } = req.body;
+
+        // Validation
+        if (!name || !email || !subject || !message) {
+            return res.status(400).json({
+                success: false,
+                error: 'All fields are required'
+            });
+        }
+
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid email address'
+            });
+        }
+
+        // Create email content
+        const mailOptions = {
+            from: `"Salon Maroc Contact Form" <${process.env.GMAIL_USER}>`,
+            to: process.env.GMAIL_USER,
+            replyTo: email,
+            subject: `[Salon Maroc Contact] ${subject}`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #8B7355;">New Contact Form Submission</h2>
+                    <div style="background-color: #f9f9f9; padding: 20px; border-radius: 5px; border-left: 4px solid #8B7355;">
+                        <p><strong>From:</strong> ${name} (${email})</p>
+                        <p><strong>Subject:</strong> ${subject}</p>
+                        <p><strong>Message:</strong></p>
+                        <div style="background-color: white; padding: 15px; border-radius: 3px; margin-top: 10px;">
+                            ${message.replace(/\n/g, '<br>')}
+                        </div>
+                    </div>
+                    <p style="color: #666; font-size: 12px; margin-top: 20px;">
+                        This message was sent from the Salon Maroc contact form.
+                    </p>
+                </div>
+            `,
+            text: `
+                New Contact Form Submission
+
+                From: ${name} (${email})
+                Subject: ${subject}
+                
+                Message:
+                ${message}
+                
+                ---
+                This message was sent from the Salon Maroc contact form.
+            `
+        };
+
+        // Send email
+        const info = await transporter.sendMail(mailOptions);
+
+        console.log('Email sent:', info.messageId);
+
+        res.json({
+            success: true,
+            message: 'Thank you for your message! We will get back to you soon.',
+            messageId: info.messageId
+        });
+
+    } catch (error) {
+        console.error('Error sending email:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to send message. Please try again later.'
+        });
+    }
 });
 
 // --- MIDDLEWARE D'AUTHENTIFICATION (JWT) ---
@@ -244,7 +332,7 @@ app.get("/fav_salon", checkAuth, (req, res) => {
 app.delete("/fav_salon/:id_salon", checkAuth, (req, res) => {
     const salonId = req.params.id_salon;
     const userId = req.user.id_user;
-    
+
     pool.query(`DELETE FROM fav_salon WHERE id_user = $1 AND id_salon = $2`, [userId, salonId], (err, result) => {
         if (err) return res.status(500).json({ error: "Failed to add" });
         res.json({ message: "Fav salon annulée." });

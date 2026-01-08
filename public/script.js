@@ -1183,8 +1183,8 @@ function showPage(pageName) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Contact Form Handler
-function handleContactForm(e) {
+// Contact Form 
+async function handleContactForm(e) {
     e.preventDefault();
     
     const name = document.getElementById('contactName').value;
@@ -1205,10 +1205,36 @@ function handleContactForm(e) {
         return;
     }
     
-    // Here you would typically send the form data to a server
-    // For now, we'll just show a success message
-    showPopup('Thank you for your message! We will get back to you soon.');
+    // Disable submit button and show loading state
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Sending...';
+    submitBtn.disabled = true;
     
-    // Reset form
-    document.getElementById('contactForm').reset();
+    try {
+        // Send form data to server
+        const response = await fetch('/contact', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name, email, subject, message })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+            showPopup(result.message || 'Thank you for your message! We will get back to you soon.');
+            document.getElementById('contactForm').reset();
+        } else {
+            showPopup(result.error || 'Failed to send message. Please try again.');
+        }
+    } catch (error) {
+        console.error('Error sending contact form:', error);
+        showPopup('Network error. Please check your connection and try again.');
+    } finally {
+        // Re-enable button
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    }
 }

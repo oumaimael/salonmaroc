@@ -751,6 +751,9 @@ body {
     border-color: var(--primary-color);
     font-weight: 600;
 }
+.pagination-btn.active:hover {
+    color: black;
+}
 
 .pagination-btn:disabled {
     opacity: 0.5;
