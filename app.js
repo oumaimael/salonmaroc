@@ -6,6 +6,8 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 require('dotenv').config();
+//for vercel
+const path = require('path');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -338,6 +340,38 @@ app.delete("/fav_salon/:id_salon", checkAuth, (req, res) => {
         res.json({ message: "Fav salon annulée." });
     });
 });
+
+// vercel 
+// Serve static files from public folder
+app.use(express.static('public'));
+
+// Handle SPA routing - serve index.html for all non-API routes
+app.get('*', (req, res) => {
+  // Check if it's an API route
+  if (req.path.startsWith('/api') || 
+      req.path.startsWith('/salon') || 
+      req.path.startsWith('/users') || 
+      req.path.startsWith('/register') || 
+      req.path.startsWith('/fav_salon') || 
+      req.path.startsWith('/contact') || 
+      req.path.startsWith('/config')) {
+    return res.status(404).json({ error: 'Endpoint not found' });
+  }
+  
+  // Serve the frontend for all other routes
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Export for Vercel serverless
+module.exports = app;
+
+// Only run the server locally (not on Vercel)
+if (require.main === module) {
+  const port = process.env.PORT || 5000;
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+  });
+}
 
 // Lancer le serveur
 app.listen(port, () => {
