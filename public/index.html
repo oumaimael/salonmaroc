@@ -138,7 +138,7 @@
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-logo">
-                <a href="index.html">Salons</a>
+                <a href="#" onclick="showPage('home'); return false;">Salons</a>
             </div>
 
             <!-- Mobile Menu Toggle -->
@@ -149,9 +149,9 @@
             </div>
 
             <div class="nav-links" id="navLinks">
-                <a href="index.html" class="nav-link">Home</a>
-                <a href="about.html" class="nav-link">About</a>
-                <a href="contact.html" class="nav-link">Contact</a>
+                <a href="#" class="nav-link" onclick="showPage('home'); return false;">Home</a>
+                <a href="#" class="nav-link" onclick="showPage('about'); return false;">About</a>
+                <a href="#" class="nav-link" onclick="showPage('contact'); return false;">Contact</a>
                 <button id="signupBtn" class="nav-login" style="margin-right: 10px;">Sign Up</button>
                 <button id="loginBtn" class="nav-login">Login</button>
                 <button id="userDisplay" style="display: none;"></button>
@@ -160,49 +160,153 @@
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <div class="hero-section">
-        <div class="hero-content">
-            <h1>Find Your Perfect Salon</h1>
-            <p>Every customer deserves the best care possible</p>
-            <div class="hero-buttons">
-                <a href="#salon-section" class="hero-button salon-btn">Browse Salons</a>
-                <button id="scrapingBtn" class="hero-button contact-btn" style="cursor: pointer;">Find Salons</button>
+    <!-- Home Page Content -->
+    <div id="homePage" class="page-content">
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <div class="hero-content">
+                <h1>Find Your Perfect Salon</h1>
+                <p>Every customer deserves the best care possible</p>
+                <div class="hero-buttons">
+                    <a href="#salon-section" class="hero-button salon-btn">Browse Salons</a>
+                    <button id="scrapingBtn" class="hero-button contact-btn" style="cursor: pointer;">Find Salons</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-container" id="salon-section">
+            <h1>Beauty Salons</h1>
+
+            <!-- Filter and Search Section -->
+            <div class="filter-section">
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="Search salons by name, city, or services...">
+                </div>
+                <div class="filter-container">
+                    <select id="cityFilter">
+                        <option value="">All Cities</option>
+                    </select>
+                    <select id="tagFilter" style="display: none;">
+                        <option value="">All Tags</option>
+                    </select>
+                    <button id="clearFilters">Clear Filters</button>
+                </div>
+            </div>
+
+            <div id="addSalonFormContainer" class="admin-only">
+                <button id="showAddFormBtn">Add New Salon</button>
+            </div>
+
+            <div id="grid"></div>
+
+            <!-- Pagination -->
+            <div id="pagination" class="pagination-container"></div>
+        </div>
+    </div>
+
+    <!-- About Page Content -->
+    <div id="aboutPage" class="page-content" style="display: none;">
+        <div class="page-hero about-hero">
+            <div class="hero-content">
+                <h1>About Salon Maroc</h1>
+                <p>Discover beauty and elegance in every salon</p>
+            </div>
+        </div>
+
+        <div class="main-container">
+            <div class="about-content">
+                <div class="about-section">
+                    <h2>Our Mission</h2>
+                    <p>Salon Maroc was created with a simple mission: to help you find the perfect beauty salon that matches your style, preferences, and budget. We believe everyone deserves access to quality beauty services.</p>
+                </div>
+
+                <div class="about-section">
+                    <h2>What We Offer</h2>
+                    <div class="features-grid">
+                        <div class="feature-card">
+                            <div class="feature-icon">💈</div>
+                            <h3>Curated Selection</h3>
+                            <p>Hand-picked salons with verified reviews and ratings.</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">⭐</div>
+                            <h3>Trusted Reviews</h3>
+                            <p>Real customer reviews to help you make informed decisions.</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">📍</div>
+                            <h3>Easy Location</h3>
+                            <p>Find salons near you with detailed location information.</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">❤️</div>
+                            <h3>Save Favorites</h3>
+                            <p>Bookmark your favorite salons for quick access.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="about-section">
+                    <h2>Our Story</h2>
+                    <p>Founded in 2023, Salon Maroc began as a passion project to connect beauty enthusiasts with top-quality salons across Morocco. Today, we've grown into a trusted platform helping thousands discover their perfect beauty destinations.</p>
+                </div>
+
+                <div class="about-section">
+                    <h2>Why Choose Us?</h2>
+                    <ul class="benefits-list">
+                        <li><strong>Verified Information:</strong> All salon details are regularly updated and verified.</li>
+                        <li><strong>User-Friendly:</strong> Easy-to-use interface for seamless browsing.</li>
+                        <li><strong>Comprehensive Details:</strong> From services to pricing, we've got you covered.</li>
+                        <li><strong>Community Driven:</strong> Real reviews from real customers.</li>
+                        <li><strong>Completely Free:</strong> No hidden fees or subscriptions.</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="main-container" id="salon-section">
-        <h1>Beauty Salons</h1>
-
-        <!-- Filter and Search Section -->
-        <div class="filter-section">
-            <div class="search-container">
-                <input type="text" id="searchInput" placeholder="Search salons by name, city, or services...">
-            </div>
-            <div class="filter-container">
-                <select id="cityFilter">
-                    <option value="">All Cities</option>
-                </select>
-                <select id="tagFilter" style="display: none;">
-                    <option value="">All Tags</option>
-                </select>
-                <button id="clearFilters">Clear Filters</button>
+    <!-- Contact Page Content -->
+    <div id="contactPage" class="page-content" style="display: none;">
+        <div class="page-hero contact-hero">
+            <div class="hero-content">
+                <h1>Contact Us</h1>
+                <p>We'd love to hear from you</p>
             </div>
         </div>
 
-        <div id="addSalonFormContainer" class="admin-only">
-            <button id="showAddFormBtn">Add New Salon</button>
+        <div class="main-container">
+            <div class="contact-wrapper">
+                <div class="contact-form-container">
+                    <h2>Send us a Message</h2>
+                    <p class="contact-intro">Have questions, suggestions, or need assistance? Reach out to us using the form below and we'll get back to you as soon as possible.</p>
+                    <form id="contactForm">
+                        <div class="form-group">
+                            <label for="contactName">Full Name *</label>
+                            <input type="text" id="contactName" placeholder="Your name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="contactEmail">Email Address *</label>
+                            <input type="email" id="contactEmail" placeholder="your.email@example.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="contactSubject">Subject *</label>
+                            <input type="text" id="contactSubject" placeholder="How can we help you?" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="contactMessage">Message *</label>
+                            <textarea id="contactMessage" rows="6" placeholder="Please provide details about your inquiry..." required></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="submit-btn">Send Message</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
-
-        <div id="grid"></div>
-
-        <!-- Pagination -->
-        <div id="pagination" class="pagination-container"></div>
     </div>
 
-    <!-- Footer -->
+    <!-- Footer (Always visible at bottom) -->
     <footer class="site-footer">
         <div class="footer-container">
             <div class="footer-section">
@@ -213,9 +317,9 @@
             <div class="footer-section">
                 <h4>Quick Links</h4>
                 <ul class="footer-links">
-                    <li><a href="index.html">Home</a></li>
-                    <li><a href="about.html">About Us</a></li>
-                    <li><a href="contact.html">Contact</a></li>
+                    <li><a href="#" onclick="showPage('home'); return false;">Home</a></li>
+                    <li><a href="#" onclick="showPage('about'); return false;">About Us</a></li>
+                    <li><a href="#" onclick="showPage('contact'); return false;">Contact</a></li>
                 </ul>
             </div>
 

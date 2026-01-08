@@ -309,6 +309,39 @@ function setupEventListeners() {
             closePopup();
         }
     });
+
+        
+    // Page navigation listeners
+    document.querySelectorAll('.nav-link').forEach(link => {
+        // Skip buttons
+        if (link.tagName === 'BUTTON') return;
+        
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const pageName = link.textContent.toLowerCase();
+            showPage(pageName);
+        });
+    });
+    
+    // Handle logo click
+    const logoLink = document.querySelector('.nav-logo a');
+    if (logoLink) {
+        logoLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showPage('home');
+        });
+    }
+    
+    // Contact form listener
+    const contactForm = document.getElementById('contactForm');
+    if (contactForm) {
+        contactForm.addEventListener('submit', handleContactForm);
+    }
+    
+    // Show home page by default on load
+    setTimeout(() => {
+        showPage('home');
+    }, 100);
 }
 
 // Close popup function
@@ -1086,4 +1119,96 @@ function createPagination(totalItems) {
         }
     };
     container.appendChild(nextBtn);
+}
+
+// Page Navigation Functionality
+function showPage(pageName) {
+    // Hide all pages
+    document.querySelectorAll('.page-content').forEach(page => {
+        page.style.display = 'none';
+    });
+    
+    // Show selected page
+    const pageElement = document.getElementById(pageName + 'Page');
+    if (pageElement) {
+        pageElement.style.display = 'block';
+        
+        // If showing home page, ensure salon section is loaded
+        if (pageName === 'home') {
+            // Small delay to ensure DOM is ready
+            setTimeout(() => {
+                if (allSalonsData.length === 0) {
+                    loadSalons();
+                }
+            }, 100);
+        }
+    }
+    
+    // Update active navigation link
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+    });
+    
+    // Set active link
+    document.querySelectorAll('.nav-link').forEach(link => {
+        if (link.textContent.toLowerCase() === pageName.toLowerCase()) {
+            link.classList.add('active');
+        }
+    });
+    
+    // Also activate the logo if it's a link to home
+    const logoLink = document.querySelector('.nav-logo a');
+    if (logoLink && pageName === 'home') {
+        // Remove active class from all nav-links first
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('active');
+        });
+        // Add active to home link
+        const homeLink = document.querySelector('.nav-link[onclick*="home"]');
+        if (homeLink) {
+            homeLink.classList.add('active');
+        }
+    }
+    
+    // Close mobile menu if open
+    const menuToggle = document.getElementById('menuToggle');
+    const navLinks = document.getElementById('navLinks');
+    if (menuToggle && navLinks && navLinks.classList.contains('active')) {
+        menuToggle.classList.remove('active');
+        navLinks.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    
+    // Scroll to top when switching pages
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Contact Form Handler
+function handleContactForm(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('contactName').value;
+    const email = document.getElementById('contactEmail').value;
+    const subject = document.getElementById('contactSubject').value;
+    const message = document.getElementById('contactMessage').value;
+    
+    // Basic validation
+    if (!name || !email || !subject || !message) {
+        showPopup('Please fill in all required fields.');
+        return;
+    }
+    
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        showPopup('Please enter a valid email address.');
+        return;
+    }
+    
+    // Here you would typically send the form data to a server
+    // For now, we'll just show a success message
+    showPopup('Thank you for your message! We will get back to you soon.');
+    
+    // Reset form
+    document.getElementById('contactForm').reset();
 }
