@@ -5,8 +5,36 @@ let SUPABASE_ANON_KEY = "";
 let currentPage = 1;
 const itemsPerPage = 6;
 let allSalonsData = [];
+let userFavorites = []; // Store user's favorite salon IDs
 
+//toggle menu
+const menuToggle = document.getElementById("menuToggle");
+const navLinks = document.getElementById("navLinks");
 
+if (menuToggle && navLinks) {
+    menuToggle.addEventListener("click", function() {
+        this.classList.toggle("active");
+        navLinks.classList.toggle("active");
+        
+        // Toggle body scroll when menu is open
+        if (navLinks.classList.contains("active")) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "";
+        }
+    });
+    
+    // Close menu when clicking on a link
+    const navLinksItems = navLinks.querySelectorAll("a, button");
+    navLinksItems.forEach(item => {
+        item.addEventListener("click", () => {
+            menuToggle.classList.remove("active");
+            navLinks.classList.remove("active");
+            document.body.style.overflow = "";
+        });
+    });
+}
+//supabase config 
 document.addEventListener("DOMContentLoaded", async () => {
     try {
         const config = await loadConfig()
@@ -179,6 +207,7 @@ function setupEventListeners() {
     const cancelSignup = document.getElementById("cancelSignup");
     const loginForm = document.getElementById("loginForm");
     const signupForm = document.getElementById("signupForm");
+    const userDisplay = document.getElementById("userDisplay");
 
     if (loginBtn) {
         loginBtn.addEventListener("click", openLoginModal);
@@ -206,6 +235,17 @@ function setupEventListeners() {
 
     if (signupForm) {
         signupForm.addEventListener("submit", handleSignup);
+    }
+
+    // User Display - Show Favorites Modal
+    if (userDisplay) {
+        userDisplay.addEventListener("click", openFavoritesModal);
+    }
+
+    // Favorites Modal listeners
+    const closeFavoritesBtn = document.getElementById("closeFavoritesBtn");
+    if (closeFavoritesBtn) {
+        closeFavoritesBtn.addEventListener("click", closeFavoritesModal);
     }
 
     // Salon listeners
@@ -279,12 +319,44 @@ function closePopup() {
     }
 }
 
+// Load user favorites
+async function loadUserFavorites() {
+    const authToken = getCookie("authToken");
+
+    if (!authToken) {
+        userFavorites = [];
+        return;
+    }
+
+    try {
+        const response = await fetch('/fav_salon', {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${authToken}`
+            }
+        });
+
+        if (response.ok) {
+            const favorites = await response.json();
+            userFavorites = favorites.map(fav => fav.id_salon);
+        } else {
+            userFavorites = [];
+        }
+    } catch (error) {
+        console.error("Error loading favorites:", error);
+        userFavorites = [];
+    }
+}
+
 // Load salons function
 async function loadSalons() {
     const grid = document.getElementById("grid");
     grid.textContent = "Loading...";
 
     try {
+        // Load favorites first if user is logged in
+        await loadUserFavorites();
+
         const response = await fetch('/salon');
 
         if (!response.ok) {
@@ -381,6 +453,10 @@ function renderSalons() {
         const card = document.createElement("div");
         card.className = "card";
 
+        // Check if salon is favorited
+        const isFavorited = userFavorites.includes(salon.id_salon);
+        const favClass = isFavorited ? 'favorited' : '';
+
         //edit and delete buttons based on login status
         const actionButtons = isLoggedIn ? `
                 <div class="card-actions">
@@ -396,7 +472,7 @@ function renderSalons() {
             <div class="card-body">
                 <div class="image-container">
                     <img src="${salon.img}" alt="${salon.name} Image" class="salon-image"/>
-                    <button class="favorite-btn" onclick="addFavorite('${salon.id_salon}')" title="Add to Favorites">♥</button>
+                    ${isLoggedIn ? `<button class="favorite-btn ${favClass}" onclick="toggleFavorite('${salon.id_salon}')" title="${isFavorited ? 'Remove from Favorites' : 'Add to Favorites'}">♥</button>` : ''}
                 </div>
                 <p><strong>Location:</strong> ${salon.city}</p>
                 <p><strong>Services:</strong> ${Array.isArray(salon.services) ? salon.services.join(', ') : salon.services}</p>
@@ -591,18 +667,149 @@ function deleteSalon(salonId) {
     });
 }
 
-// Add to Favorites
-async function addFavorite(salonId) {
+// Toggle Favorite (Add/Remove)
+async function toggleFavorite(salonId) {
     const authToken = getCookie("authToken");
 
     if (!authToken) {
-        showPopup("Please login to add favorites");
+        showPopup("Please login to manage favorites");
+        return;
+    }
+
+    const isFavorited = userFavorites.includes(salonId);
+
+    try {
+        if (isFavorited) {
+            // Remove from favorites
+            const response = await fetch(`/fav_salon/${salonId}`, {
+                method: "DELETE",
+                headers: {
+                    "Authorization": `Bearer ${authToken}`
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showPopup("Salon removed from favorites!");
+                // Update local favorites array
+                userFavorites = userFavorites.filter(id => id !== salonId);
+                // Re-render to update heart icon
+                renderSalons();
+            } else {
+                showPopup(data.error || "Error removing from favorites");
+            }
+        } else {
+            // Add to favorites
+            const response = await fetch(`/fav_salon/${salonId}`, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${authToken}`
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showPopup("Salon added to favorites!");
+                // Update local favorites array
+                userFavorites.push(salonId);
+                // Re-render to update heart icon
+                renderSalons();
+            } else {
+                showPopup(data.error || "Error adding to favorites");
+            }
+        }
+    } catch (error) {
+        showPopup("Error: " + error.message);
+        console.error("Error:", error);
+    }
+}
+
+// Open Favorites Modal
+async function openFavoritesModal() {
+    const authToken = getCookie("authToken");
+
+    if (!authToken) {
+        showPopup("Please login to view favorites");
+        return;
+    }
+
+    const modal = document.getElementById("favoritesModal");
+    const favoritesGrid = document.getElementById("favoritesGrid");
+
+    if (!modal || !favoritesGrid) return;
+
+    try {
+        // Fetch user's favorite salons
+        const response = await fetch('/fav_salon', {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${authToken}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to fetch favorites");
+        }
+
+        const favorites = await response.json();
+
+        // Clear the grid
+        favoritesGrid.innerHTML = "";
+
+        if (favorites.length === 0) {
+            favoritesGrid.innerHTML = '<div class="no-favorites">You have no favorite salons yet. Start adding some!</div>';
+        } else {
+            favorites.forEach(salon => {
+                const favItem = document.createElement("div");
+                favItem.className = "favorite-item";
+
+                favItem.innerHTML = `
+                    <div class="favorite-item-image">
+                        <img src="${salon.img}" alt="${salon.name}">
+                    </div>
+                    <div class="favorite-item-content">
+                        <h4>${salon.name}</h4>
+                        <p><strong>Location:</strong> ${salon.city}</p>
+                        <p><strong>Services:</strong> ${Array.isArray(salon.services) ? salon.services.join(', ') : salon.services}</p>
+                        <p><strong>Price Range:</strong> ${salon.m_range_price}</p>
+                        <p><strong>Rating:</strong> ⭐ ${salon.review}</p>
+                        <button class="remove-favorite-btn" onclick="removeFavoriteFromModal('${salon.id_salon}')">Remove from Favorites</button>
+                    </div>
+                `;
+
+                favoritesGrid.appendChild(favItem);
+            });
+        }
+
+        modal.classList.add("active");
+    } catch (error) {
+        showPopup("Error loading favorites: " + error.message);
+        console.error("Error:", error);
+    }
+}
+
+// Close Favorites Modal
+function closeFavoritesModal() {
+    const modal = document.getElementById("favoritesModal");
+    if (modal) {
+        modal.classList.remove("active");
+    }
+}
+
+// Remove favorite from modal
+async function removeFavoriteFromModal(salonId) {
+    const authToken = getCookie("authToken");
+
+    if (!authToken) {
+        showPopup("Please login to manage favorites");
         return;
     }
 
     try {
         const response = await fetch(`/fav_salon/${salonId}`, {
-            method: "POST",
+            method: "DELETE",
             headers: {
                 "Authorization": `Bearer ${authToken}`
             }
@@ -611,9 +818,15 @@ async function addFavorite(salonId) {
         const data = await response.json();
 
         if (response.ok) {
-            showPopup("Salon added to favorites successfully!");
+            showPopup("Salon removed from favorites!");
+            // Update local favorites array
+            userFavorites = userFavorites.filter(id => id !== salonId);
+            // Reload favorites modal
+            openFavoritesModal();
+            // Re-render main salons to update heart icons
+            renderSalons();
         } else {
-            showPopup(data.error || "Error adding to favorites");
+            showPopup(data.error || "Error removing from favorites");
         }
     } catch (error) {
         showPopup("Error: " + error.message);
@@ -783,6 +996,7 @@ async function handleSignup(e) {
 function handleLogout() {
     deleteCookie("authToken");
     deleteCookie("username");
+    userFavorites = [];
     showPopup("You have been logged out");
     checkAuthStatus();
     loadSalons();
@@ -794,6 +1008,7 @@ window.addEventListener("click", (e) => {
     const signupModal = document.getElementById("signupModal");
     const salonFormModal = document.getElementById("salonFormModal");
     const popupContainer = document.getElementById("popupContainer");
+    const favoritesModal = document.getElementById("favoritesModal");
 
     // Close login modal
     if (e.target === loginModal) {
@@ -813,6 +1028,11 @@ window.addEventListener("click", (e) => {
     // Close popup when clicking on the overlay background
     if (e.target === popupContainer) {
         closePopup();
+    }
+
+    // Close favorites modal
+    if (e.target === favoritesModal) {
+        closeFavoritesModal();
     }
 });
 
@@ -837,7 +1057,7 @@ function createPagination(totalItems) {
     prevBtn.onclick = () => {
         if (currentPage > 1) {
             currentPage--;
-            loadSalons();
+            renderSalons();
         }
     };
     container.appendChild(prevBtn);
@@ -849,7 +1069,7 @@ function createPagination(totalItems) {
         pageBtn.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
         pageBtn.onclick = () => {
             currentPage = i;
-            loadSalons();
+            renderSalons();
         };
         container.appendChild(pageBtn);
     }
@@ -862,7 +1082,7 @@ function createPagination(totalItems) {
     nextBtn.onclick = () => {
         if (currentPage < totalPages) {
             currentPage++;
-            loadSalons();
+            renderSalons();
         }
     };
     container.appendChild(nextBtn);

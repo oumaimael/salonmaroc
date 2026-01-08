@@ -129,7 +129,7 @@ app.get('/salon', (req, res) => {
 
 app.get('/salon/:id_salon', (req, res) => {
     const salonId = req.params.id_salon;
-    pool.query("SELECT * FROM salon WHERE id_salon = $1 ",[salonId], (err, result) => {
+    pool.query("SELECT * FROM salon WHERE id_salon = $1 ", [salonId], (err, result) => {
         if (err) return res.status(500).json({ error: "SQL Error" });
         res.json(result.rows);
     });
@@ -221,8 +221,7 @@ app.post("/fav_salon/:id_salon", checkAuth, (req, res) => {
     const salonId = req.params.id_salon;
     const userId = req.user.id_user;
 
-    const sql = "INSERT INTO fav_salon (id_user, id_salon) VALUES ($1, $2) ON CONFLICT DO NOTHING";
-    pool.query(sql, [userId, salonId], (err) => {
+    pool.query(`INSERT INTO fav_salon (id_user, id_salon) VALUES ($1, $2) ON CONFLICT DO NOTHING`, [userId, salonId], (err) => {
         if (err) return res.status(500).json({ error: "Error while adding salon" });
         res.json({ message: "salon added to favorites with success!" });
     });
@@ -231,12 +230,11 @@ app.post("/fav_salon/:id_salon", checkAuth, (req, res) => {
 // Récupérer mes salons favoris
 app.get("/fav_salon", checkAuth, (req, res) => {
     const userId = req.user.id_user;
-    const sql = `
+    pool.query(`
         SELECT salon.* FROM salon 
         JOIN fav_salon ON salon.id_salon = fav_salon.id_salon 
         WHERE fav_salon.id_user = $1
-    `;
-    pool.query(sql, [userId], (err, result) => {
+    `, [userId], (err, result) => {
         if (err) return res.status(500).json({ error: "failed to recuperate favorite salons" });
         res.json(result.rows);
     });
@@ -246,9 +244,8 @@ app.get("/fav_salon", checkAuth, (req, res) => {
 app.delete("/fav_salon/:id_salon", checkAuth, (req, res) => {
     const salonId = req.params.id_salon;
     const userId = req.user.id_user;
-
-    const sql = "DELETE FROM fav_salon WHERE id_user = $1 AND id_salon = $2";
-    pool.query(sql, [userId, salonId], (err, result) => {
+    
+    pool.query(`DELETE FROM fav_salon WHERE id_user = $1 AND id_salon = $2`, [userId, salonId], (err, result) => {
         if (err) return res.status(500).json({ error: "Failed to add" });
         res.json({ message: "Fav salon annulée." });
     });
