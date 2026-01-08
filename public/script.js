@@ -226,6 +226,19 @@ function setupEventListeners() {
     const searchInput = document.getElementById("searchInput");
     const cityFilter = document.getElementById("cityFilter");
     const clearFiltersBtn = document.getElementById("clearFilters");
+    const scrapingBtn = document.getElementById("scrapingBtn");
+
+    if (scrapingBtn) {
+        scrapingBtn.addEventListener("click", () => {
+            const authToken = getCookie("authToken");
+            if (!authToken) {
+                showPopup("Please login to use this feature");
+                return;
+            }
+            // Logic for Find Salons would go here
+            showPopup("Feature coming soon!");
+        });
+    }
 
     if (searchInput) {
         searchInput.addEventListener("input", () => {
@@ -383,6 +396,7 @@ function renderSalons() {
             <div class="card-body">
                 <div class="image-container">
                     <img src="${salon.img}" alt="${salon.name} Image" class="salon-image"/>
+                    <button class="favorite-btn" onclick="addFavorite('${salon.id_salon}')" title="Add to Favorites">♥</button>
                 </div>
                 <p><strong>Location:</strong> ${salon.city}</p>
                 <p><strong>Services:</strong> ${Array.isArray(salon.services) ? salon.services.join(', ') : salon.services}</p>
@@ -390,6 +404,7 @@ function renderSalons() {
                 <p><strong>Review:</strong> ${salon.review}</p>
                 <p><strong>Working hours:</strong> ${salon.working_h}</p>
                 <p><strong>Status:</strong> ${salon.status}</p>
+                
                 ${actionButtons}
             </div>
         `;
@@ -576,6 +591,36 @@ function deleteSalon(salonId) {
     });
 }
 
+// Add to Favorites
+async function addFavorite(salonId) {
+    const authToken = getCookie("authToken");
+
+    if (!authToken) {
+        showPopup("Please login to add favorites");
+        return;
+    }
+
+    try {
+        const response = await fetch(`/fav_salon/${salonId}`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${authToken}`
+            }
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showPopup("Salon added to favorites successfully!");
+        } else {
+            showPopup(data.error || "Error adding to favorites");
+        }
+    } catch (error) {
+        showPopup("Error: " + error.message);
+        console.error("Error:", error);
+    }
+}
+
 
 // AUTHENTICATION FUNCTIONS
 
@@ -586,6 +631,7 @@ function checkAuthStatus() {
     const signupBtn = document.getElementById("signupBtn");
     const logoutBtn = document.getElementById("logoutBtn");
     const showAddFormBtn = document.getElementById("showAddFormBtn");
+    const scrapingBtn = document.getElementById("scrapingBtn");
 
     if (token) {
         // Check if token is expired
@@ -601,12 +647,23 @@ function checkAuthStatus() {
         if (signupBtn) signupBtn.style.display = "none";
         if (logoutBtn) logoutBtn.style.display = "block";
         if (showAddFormBtn) showAddFormBtn.style.display = "block";
+        if (scrapingBtn) scrapingBtn.style.display = "inline-block";
+
+        const userDisplay = document.getElementById("userDisplay");
+        const username = getCookie("username");
+        if (userDisplay && username) {
+            userDisplay.textContent = username;
+            userDisplay.style.display = "inline-block";
+        }
     } else {
         // User is not logged in
         if (loginBtn) loginBtn.style.display = "block";
         if (signupBtn) signupBtn.style.display = "block";
         if (logoutBtn) logoutBtn.style.display = "none";
         if (showAddFormBtn) showAddFormBtn.style.display = "none";
+        if (scrapingBtn) scrapingBtn.style.display = "none";
+        const userDisplay = document.getElementById("userDisplay");
+        if (userDisplay) userDisplay.style.display = "none";
     }
 }
 
@@ -670,6 +727,9 @@ async function handleLogin(e) {
         if (response.ok) {
             // Store token in cookie for 1 day
             setCookie("authToken", result.token, 1);
+            // Store username in cookie for 1 day
+            setCookie("username", username, 1);
+
             showPopup("Login successful!");
             closeLoginModal();
             checkAuthStatus();
@@ -722,6 +782,7 @@ async function handleSignup(e) {
 // Logout
 function handleLogout() {
     deleteCookie("authToken");
+    deleteCookie("username");
     showPopup("You have been logged out");
     checkAuthStatus();
     loadSalons();

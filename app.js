@@ -115,13 +115,13 @@ app.get('/logout', (req, res) => {
 app.get('/salon', (req, res) => {
     pool.query("SELECT * FROM salon", (err, result) => {
         if (err) {
-        console.error("SQL Error on /salon route:", err.message);
-        console.error("Full error details:", err);
-        return res.status(500).json({
-            error: "SQL Error",
-            message: err.message
-        });
-    }
+            console.error("SQL Error on /salon route:", err.message);
+            console.error("Full error details:", err);
+            return res.status(500).json({
+                error: "SQL Error",
+                message: err.message
+            });
+        }
         res.json(result.rows);
     });
 });
