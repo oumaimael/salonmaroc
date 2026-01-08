@@ -1,6 +1,10 @@
 // Configuration
 let SUPABASE_URL = "";
 let SUPABASE_ANON_KEY = "";
+// Pagination variables
+let currentPage = 1;
+const itemsPerPage = 6;
+let allSalonsData = [];
 
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -29,27 +33,131 @@ async function loadConfig() {
 function showPopup(message) {
     const popupContainer = document.getElementById("popupContainer");
     const popupMessage = document.getElementById("popupMessage");
-    
+
     if (popupContainer && popupMessage) {
         popupMessage.textContent = message;
         popupContainer.classList.add("active");
     }
 }
 
+// Cookie Helper Functions
+function setCookie(name, value, days) {
+    let expires = "";
+    if (days) {
+        const date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Strict";
+}
+
+function getCookie(name) {
+    const nameEQ = name + "=";
+    const ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
+}
+
+function deleteCookie(name) {
+    document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+}
+
+function parseJwt(token) {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function (c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        return null;
+    }
+}
+
+// Confirm Popup Functions
+function showConfirmPopup(message, onConfirm) {
+    const confirmPopup = document.getElementById("confirmPopup");
+    const confirmMessage = document.getElementById("confirmMessage");
+    const confirmYes = document.getElementById("confirmYes");
+    const confirmNo = document.getElementById("confirmNo");
+
+    if (confirmPopup && confirmMessage) {
+        confirmMessage.textContent = message;
+        confirmPopup.classList.add("active");
+
+        // Handle Yes click
+        confirmYes.onclick = function () {
+            onConfirm();
+            closeConfirmPopup();
+        };
+
+        // Handle No click
+        confirmNo.onclick = closeConfirmPopup;
+
+        // Handle click outside
+        confirmPopup.onclick = function (e) {
+            if (e.target === confirmPopup) {
+                closeConfirmPopup();
+            }
+        };
+    }
+}
+
+function closeConfirmPopup() {
+    const confirmPopup = document.getElementById("confirmPopup");
+    if (confirmPopup) {
+        confirmPopup.classList.remove("active");
+    }
+}
+
+
 //Modal Functions 
 function openSalonFormModal() {
     const modal = document.getElementById("salonFormModal");
+    const salonForm = document.getElementById("salonForm");
+
     if (modal) {
         modal.classList.add("active");
-        document.getElementById("salonForm").reset();
+        salonForm.reset();
+
+        // Reset edit mode
+        salonForm.dataset.isEdit = "false";
+        delete salonForm.dataset.salonId;
+
+        // Set submit handler to AddSalon
+        salonForm.onsubmit = AddSalon;
+
+        // Reset button text
+        const submitBtn = document.querySelector("#salonForm button[type='submit']");
+        if (submitBtn) {
+            submitBtn.textContent = "Add Salon";
+        }
     }
 }
 
 function closeSalonFormModal() {
     const modal = document.getElementById("salonFormModal");
+    const salonForm = document.getElementById("salonForm");
+
     if (modal) {
         modal.classList.remove("active");
-        document.getElementById("salonForm").reset();
+        salonForm.reset();
+
+        // Reset edit mode
+        salonForm.dataset.isEdit = "false";
+        delete salonForm.dataset.salonId;
+
+        // Reset button text
+        const submitBtn = document.querySelector("#salonForm button[type='submit']");
+        if (submitBtn) {
+            submitBtn.textContent = "Add Salon";
+        }
     }
 }
 
@@ -71,62 +179,84 @@ function setupEventListeners() {
     const cancelSignup = document.getElementById("cancelSignup");
     const loginForm = document.getElementById("loginForm");
     const signupForm = document.getElementById("signupForm");
-    
+
     if (loginBtn) {
         loginBtn.addEventListener("click", openLoginModal);
     }
-    
+
     if (signupBtn) {
         signupBtn.addEventListener("click", openSignupModal);
     }
-    
+
     if (logoutBtn) {
         logoutBtn.addEventListener("click", handleLogout);
     }
-    
+
     if (cancelLogin) {
         cancelLogin.addEventListener("click", closeLoginModal);
     }
-    
+
     if (cancelSignup) {
         cancelSignup.addEventListener("click", closeSignupModal);
     }
-    
+
     if (loginForm) {
         loginForm.addEventListener("submit", handleLogin);
     }
-    
+
     if (signupForm) {
         signupForm.addEventListener("submit", handleSignup);
     }
-    
+
     // Salon listeners
     const showAddFormBtn = document.getElementById("showAddFormBtn");
     const cancelSalonForm = document.getElementById("cancelSalonForm");
     const salonForm = document.getElementById("salonForm");
 
-    
+
     if (showAddFormBtn) {
         showAddFormBtn.addEventListener("click", openSalonFormModal);
     }
-    
+
     if (cancelSalonForm) {
         cancelSalonForm.addEventListener("click", closeSalonFormModal);
     }
-    
-    if (salonForm) {
-        salonForm.addEventListener("submit", AddSalon);
+
+    // Search and Filter listeners
+    const searchInput = document.getElementById("searchInput");
+    const cityFilter = document.getElementById("cityFilter");
+    const clearFiltersBtn = document.getElementById("clearFilters");
+
+    if (searchInput) {
+        searchInput.addEventListener("input", () => {
+            currentPage = 1;
+            renderSalons();
+        });
     }
 
+    if (cityFilter) {
+        cityFilter.addEventListener("change", () => {
+            currentPage = 1;
+            renderSalons();
+        });
+    }
 
-    
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener("click", () => {
+            if (searchInput) searchInput.value = "";
+            if (cityFilter) cityFilter.value = "";
+            currentPage = 1;
+            renderSalons();
+        });
+    }
+
     // Popup OK button - using event delegation
-    document.addEventListener("click", function(e) {
+    document.addEventListener("click", function (e) {
         if (e.target && (e.target.id === "popupOk" || e.target.classList.contains("popupOk"))) {
             closePopup();
         }
     });
-}    
+}
 
 // Close popup function
 function closePopup() {
@@ -142,72 +272,145 @@ async function loadSalons() {
     grid.textContent = "Loading...";
 
     try {
-        const response = await fetch("/salon");
-        
+        const response = await fetch('/salon');
+
         if (!response.ok) {
             throw new Error("Failed to fetch salons");
         }
 
-        const salons = await response.json();
-        grid.innerHTML = "";
+        allSalonsData = await response.json();
 
-        if (salons.length === 0) {
+        if (!allSalonsData || allSalonsData.length === 0) {
+            grid.innerHTML = "";
             grid.textContent = "No salons found.";
+            document.getElementById("pagination").innerHTML = "";
             return;
         }
 
-        // Check if user is logged in
-        const isLoggedIn = !!localStorage.getItem("authToken");
+        populateCityFilter(allSalonsData);
+        renderSalons();
 
-        salons.forEach((salon) => {
-            const card = document.createElement("div");
-            card.className = "card";
-            
-            // Conditionally show/hide edit and delete buttons based on login status
-            const actionButtons = isLoggedIn ? `
-                    <div class="card-actions">
-                        <button class="edit-btn" onclick="editSalon(${salon.id_salon})">Edit</button>
-                        <button class="delete-btn" onclick="deleteSalon(${salon.id_salon})">Delete</button>
-                    </div>
-            ` : '';
-            
-            card.innerHTML = `
-                <div class="card-header">
-                    <h3>${salon.name}</h3>
-                </div>
-                <div class="card-body">
-                    <div class="image-container">
-                        <img src="${salon.img}" alt="${salon.name} Image" class="salon-image"/>
-                    </div>
-                    <p><strong>Location:</strong> ${salon.city}</p>
-                    <p><strong>Services:</strong> ${Array.isArray(salon.services) ? salon.services.join(', ') : salon.services}</p>
-                    <p><strong>Medium range price:</strong> ${salon.m_range_price}</p>
-                    <p><strong>Review:</strong> ${salon.review}</p>
-                    <p><strong>Working hours:</strong> ${salon.working_h}</p>
-                    <p><strong>Status:</strong> ${salon.status}</p>
-                    ${actionButtons}
-                </div>
-            `;
-            grid.appendChild(card);
-        });
     } catch (error) {
         grid.innerHTML = `<p style="color: red;">Error loading salons: ${error.message}</p>`;
         console.error("Error:", error);
     }
 }
 
+function populateCityFilter(salons) {
+    const cityFilter = document.getElementById("cityFilter");
+    if (!cityFilter) return;
+
+    // Get unique cities
+    const cities = [...new Set(salons.map(salon => salon.city).filter(city => city))].sort();
+
+    // Save current selection if any
+    const currentSelection = cityFilter.value;
+
+    // Reset options
+    cityFilter.innerHTML = '<option value="">All Cities</option>';
+
+    cities.forEach(city => {
+        const option = document.createElement("option");
+        option.value = city;
+        option.textContent = city;
+        cityFilter.appendChild(option);
+    });
+
+    // Restore selection if valid
+    if (cities.includes(currentSelection)) {
+        cityFilter.value = currentSelection;
+    }
+}
+
+function renderSalons() {
+    const grid = document.getElementById("grid");
+    const searchInput = document.getElementById("searchInput");
+    const cityFilter = document.getElementById("cityFilter");
+
+    const searchText = searchInput ? searchInput.value.toLowerCase() : "";
+    const selectedCity = cityFilter ? cityFilter.value : "";
+
+    // Filter data
+    const filteredSalons = allSalonsData.filter(salon => {
+        const matchesSearch = !searchText ||
+            (salon.name && salon.name.toLowerCase().includes(searchText)) ||
+            (salon.city && salon.city.toLowerCase().includes(searchText)) ||
+            (Array.isArray(salon.services) && salon.services.join(' ').toLowerCase().includes(searchText)) ||
+            (typeof salon.services === 'string' && salon.services.toLowerCase().includes(searchText));
+
+        const matchesCity = !selectedCity || salon.city === selectedCity;
+
+        return matchesSearch && matchesCity;
+    });
+
+    grid.innerHTML = "";
+
+    if (filteredSalons.length === 0) {
+        grid.textContent = "No salons found matching your criteria.";
+        document.getElementById("pagination").innerHTML = "";
+        return;
+    }
+
+    // Calculate pagination on filtered results
+    const totalPages = Math.ceil(filteredSalons.length / itemsPerPage);
+
+    // Ensure currentPage is valid
+    if (currentPage > totalPages) currentPage = 1;
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const salonsToDisplay = filteredSalons.slice(startIndex, endIndex);
+
+    // Check if user is logged in
+    const isLoggedIn = !!getCookie("authToken");
+
+    salonsToDisplay.forEach((salon) => {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        //edit and delete buttons based on login status
+        const actionButtons = isLoggedIn ? `
+                <div class="card-actions">
+                    <button class="edit-btn" onclick="editSalon('${salon.id_salon}')">Edit</button>
+                    <button class="delete-btn" onclick="deleteSalon('${salon.id_salon}')">Delete</button>
+                </div>
+        ` : '';
+
+        card.innerHTML = `
+            <div class="card-header">
+                <h3>${salon.name}</h3>
+            </div>
+            <div class="card-body">
+                <div class="image-container">
+                    <img src="${salon.img}" alt="${salon.name} Image" class="salon-image"/>
+                </div>
+                <p><strong>Location:</strong> ${salon.city}</p>
+                <p><strong>Services:</strong> ${Array.isArray(salon.services) ? salon.services.join(', ') : salon.services}</p>
+                <p><strong>Medium range price:</strong> ${salon.m_range_price}</p>
+                <p><strong>Review:</strong> ${salon.review}</p>
+                <p><strong>Working hours:</strong> ${salon.working_h}</p>
+                <p><strong>Status:</strong> ${salon.status}</p>
+                ${actionButtons}
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+
+    // Create pagination with filtered count
+    createPagination(filteredSalons.length);
+}
 
 //Add Salon Function
 async function AddSalon(e) {
     e.preventDefault();
-    
-    authToken = localStorage.getItem("authToken");
-    
+
+    const authToken = getCookie("authToken");
+
     if (!authToken) {
         showPopup("Please login to continue!");
         return;
     }
-    
+
     const salonData = {
         name: document.getElementById("salonName").value,
         services: document.getElementById("salonServices").value,
@@ -218,7 +421,7 @@ async function AddSalon(e) {
         status: document.getElementById("salonStatus").value,
         img: document.getElementById("salonImage").value
     };
-    
+
     try {
         const response = await fetch("/salon", {
             method: "POST",
@@ -228,9 +431,9 @@ async function AddSalon(e) {
             },
             body: JSON.stringify(salonData)
         });
-        
+
         const result = await response.json();
-        
+
         if (response.ok) {
             showPopup("Salon added successfully!");
             closeSalonFormModal();
@@ -246,17 +449,131 @@ async function AddSalon(e) {
 
 //Edit Salon
 function editSalon(salonId) {
-    const modal = document.getElementById("salonFormModal");
-    if (modal) {
-        modal.classList.add("active");
-        document.getElementById("salonForm").reset();
+    const authToken = getCookie("authToken");
+
+    if (!authToken) {
+        showPopup("Please login to edit salons");
+        return;
     }
+
+    // Fetch the salon data
+    fetch(`/salon/${salonId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.length > 0) {
+                const salon = data[0];
+
+                // Populate form with existing data
+                document.getElementById("salonName").value = salon.name || "";
+                document.getElementById("salonServices").value = Array.isArray(salon.services) ? salon.services.join(", ") : salon.services || "";
+                document.getElementById("salonCity").value = salon.city || "";
+                document.getElementById("salonPrice").value = salon.m_range_price || "";
+                document.getElementById("salonRating").value = salon.review || "";
+                document.getElementById("salonHours").value = salon.working_h || "";
+                document.getElementById("salonStatus").value = salon.status || "";
+                document.getElementById("salonImage").value = salon.img || "";
+
+                // Store the salon ID for update
+                const salonForm = document.getElementById("salonForm");
+                salonForm.dataset.salonId = salonId;
+                salonForm.dataset.isEdit = "true";
+
+                // Set submit handler to Update logic
+                salonForm.onsubmit = async function (e) {
+                    e.preventDefault();
+
+                    const authToken = getCookie("authToken");
+
+                    if (!authToken) {
+                        showPopup("Please login to continue!");
+                        return;
+                    }
+
+                    const salonData = {
+                        name: document.getElementById("salonName").value,
+                        services: document.getElementById("salonServices").value,
+                        city: document.getElementById("salonCity").value,
+                        m_range_price: document.getElementById("salonPrice").value,
+                        review: parseFloat(document.getElementById("salonRating").value),
+                        working_h: document.getElementById("salonHours").value,
+                        status: document.getElementById("salonStatus").value,
+                        img: document.getElementById("salonImage").value
+                    };
+
+                    try {
+                        const response = await fetch(`/salon/${salonId}`, {
+                            method: "PUT",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": `Bearer ${authToken}`
+                            },
+                            body: JSON.stringify(salonData)
+                        });
+
+                        const result = await response.json();
+
+                        if (response.ok) {
+                            showPopup("Salon updated successfully!");
+                            closeSalonFormModal();
+                            loadSalons();
+                        } else {
+                            showPopup(result.error || "Error updating salon");
+                        }
+                    } catch (error) {
+                        showPopup("Error: " + error.message);
+                        console.error("Error:", error);
+                    }
+                };
+
+                // Change button text
+                const submitBtn = document.querySelector("#salonForm button[type='submit']");
+                if (submitBtn) {
+                    submitBtn.textContent = "Update Salon";
+                }
+
+                // Open the modal
+                const modal = document.getElementById("salonFormModal");
+                if (modal) {
+                    modal.classList.add("active");
+                }
+            }
+        })
+        .catch(error => {
+            showPopup("Error loading salon data: " + error.message);
+            console.error("Error:", error);
+        });
 }
 
 //Delete Salon
-
 function deleteSalon(salonId) {
-    
+    showConfirmPopup("Are you sure you want to delete this salon?", () => {
+        const authToken = getCookie("authToken");
+
+        if (!authToken) {
+            showPopup("Please login to delete salons");
+            return;
+        }
+
+        fetch(`/salon/${salonId}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": `Bearer ${authToken}`
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showPopup("Salon deleted successfully!");
+                    loadSalons();
+                } else {
+                    showPopup(data.error || "Error deleting salon");
+                }
+            })
+            .catch(error => {
+                showPopup("Error: " + error.message);
+                console.error("Error:", error);
+            });
+    });
 }
 
 
@@ -264,13 +581,21 @@ function deleteSalon(salonId) {
 
 // Check if user is logged in on page load
 function checkAuthStatus() {
-    const token = localStorage.getItem("authToken");
+    const token = getCookie("authToken");
     const loginBtn = document.getElementById("loginBtn");
     const signupBtn = document.getElementById("signupBtn");
     const logoutBtn = document.getElementById("logoutBtn");
     const showAddFormBtn = document.getElementById("showAddFormBtn");
-    
+
     if (token) {
+        // Check if token is expired
+        const decodedToken = parseJwt(token);
+        if (decodedToken && decodedToken.exp * 1000 < Date.now()) {
+            // Token expired
+            handleLogout();
+            return;
+        }
+
         // User is logged in
         if (loginBtn) loginBtn.style.display = "none";
         if (signupBtn) signupBtn.style.display = "none";
@@ -322,15 +647,15 @@ function closeSignupModal() {
 // Handle Login
 async function handleLogin(e) {
     e.preventDefault();
-    
+
     const username = document.getElementById("loginUsername").value;
     const password = document.getElementById("loginPassword").value;
-    
+
     if (!username || !password) {
         showPopup("Please fill in all fields");
         return;
     }
-    
+
     try {
         const response = await fetch("/users", {
             method: "POST",
@@ -339,12 +664,12 @@ async function handleLogin(e) {
             },
             body: JSON.stringify({ username, password })
         });
-        
+
         const result = await response.json();
-        
+
         if (response.ok) {
-            // Store token in localStorage
-            localStorage.setItem("authToken", result.token);
+            // Store token in cookie for 1 day
+            setCookie("authToken", result.token, 1);
             showPopup("Login successful!");
             closeLoginModal();
             checkAuthStatus();
@@ -361,16 +686,16 @@ async function handleLogin(e) {
 // Signup
 async function handleSignup(e) {
     e.preventDefault();
-    
+
     const name = document.getElementById("signupUsername").value;
     const email = document.getElementById("signupEmail").value;
     const password = document.getElementById("signupPassword").value;
-    
+
     if (!name || !email || !password) {
         showPopup("Please fill in all fields");
         return;
     }
-    
+
     try {
         const response = await fetch("/register", {
             method: "POST",
@@ -379,9 +704,9 @@ async function handleSignup(e) {
             },
             body: JSON.stringify({ name, email, password })
         });
-        
+
         const result = await response.json();
-        
+
         if (response.ok) {
             closeSignupModal();
             openLoginModal();
@@ -396,7 +721,7 @@ async function handleSignup(e) {
 
 // Logout
 function handleLogout() {
-    localStorage.removeItem("authToken");
+    deleteCookie("authToken");
     showPopup("You have been logged out");
     checkAuthStatus();
     loadSalons();
@@ -408,22 +733,22 @@ window.addEventListener("click", (e) => {
     const signupModal = document.getElementById("signupModal");
     const salonFormModal = document.getElementById("salonFormModal");
     const popupContainer = document.getElementById("popupContainer");
-    
+
     // Close login modal
     if (e.target === loginModal) {
         closeLoginModal();
     }
-    
+
     // Close signup modal
     if (e.target === signupModal) {
         closeSignupModal();
     }
-    
+
     // Close salon form modal
     if (e.target === salonFormModal) {
         closeSalonFormModal();
     }
-    
+
     // Close popup when clicking on the overlay background
     if (e.target === popupContainer) {
         closePopup();
@@ -434,3 +759,50 @@ window.addEventListener("click", (e) => {
 document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => checkAuthStatus(), 500);
 });
+
+// Create pagination buttons
+function createPagination(totalItems) {
+    const container = document.getElementById('pagination');
+    container.innerHTML = '';
+
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    if (totalPages <= 1) return;
+
+    // Previous button
+    const prevBtn = document.createElement('button');
+    prevBtn.textContent = '←';
+    prevBtn.className = 'pagination-btn';
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.onclick = () => {
+        if (currentPage > 1) {
+            currentPage--;
+            loadSalons();
+        }
+    };
+    container.appendChild(prevBtn);
+
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.textContent = i;
+        pageBtn.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
+        pageBtn.onclick = () => {
+            currentPage = i;
+            loadSalons();
+        };
+        container.appendChild(pageBtn);
+    }
+
+    // Next button
+    const nextBtn = document.createElement('button');
+    nextBtn.textContent = '→';
+    nextBtn.className = 'pagination-btn';
+    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.onclick = () => {
+        if (currentPage < totalPages) {
+            currentPage++;
+            loadSalons();
+        }
+    };
+    container.appendChild(nextBtn);
+}

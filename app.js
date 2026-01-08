@@ -11,12 +11,12 @@ const port = process.env.PORT || 5000;
 
 // --- CONNEXION POSTGRESQL (SUPABASE) ---
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL, 
-    ssl: { rejectUnauthorized: false } 
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
 });
 
 // --- MIDDLEWARES---
-app.use(cors({ origin: true, credentials: true })); 
+app.use(cors({ origin: true, credentials: true }));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static('./public'));
@@ -31,14 +31,14 @@ app.get('/config', (req, res) => {
 
 // --- MIDDLEWARE D'AUTHENTIFICATION (JWT) ---
 const checkAuth = (req, res, next) => {
-    const token = req.headers.authorization?.split(' ')[1]; 
+    const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
         return res.status(401).json({ error: "No teken generated" });
     }
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded; 
+        req.user = decoded;
         next();
     } catch (err) {
         return res.status(401).json({ error: "invalid or expired token" });
@@ -64,19 +64,19 @@ app.post('/users', (req, res) => {
 
             if (isMatch) {
                 const token = jwt.sign(
-                    { userId: user.id_user, username: user.username },  
-                    process.env.JWT_SECRET,                        
-                    { expiresIn: '2h' }                          
+                    { userId: user.id_user, username: user.username },
+                    process.env.JWT_SECRET,
+                    { expiresIn: '2h' }
                 );
 
                 res.json({
                     message: "Login successful",
-                    token: token,  
+                    token: token,
                     user: { id: user.id_user, username: user.username }
                 });
             } else {
                 res.status(401).json({ error: "Incorrect password" });
-            } 
+            }
         });
     });
 });
@@ -92,15 +92,15 @@ app.post('/register', async (req, res) => {
         if (existing.rows.length > 0) {
             return res.status(409).json({ error: "Username already in use" });
         }
-        
+
         const hashedPassword = await bcrypt.hash(password, 10);
-        await pool.query("INSERT INTO users (name, password, email) VALUES ($1, $2, $3)", 
+        await pool.query("INSERT INTO users (name, password, email) VALUES ($1, $2, $3)",
             [name, hashedPassword, email]);
         res.json({ message: "User created !" });
     } catch (e) {
         if (e.code === '23505') {
             return res.status(409).json({ error: "Username or email already in use" });
-    }
+        }
         console.error("Registration error:", e);
         res.status(500).json({ error: "Server error" });
     }
@@ -115,13 +115,13 @@ app.get('/logout', (req, res) => {
 app.get('/salon', (req, res) => {
     pool.query("SELECT * FROM salon", (err, result) => {
         if (err) {
-            console.error("SQL Error on /salon route:", err.message);
-            console.error("Full error details:", err);
-            return res.status(500).json({ 
-                error: "SQL Error", 
-                message: err.message 
-            });
-        }
+        console.error("SQL Error on /salon route:", err.message);
+        console.error("Full error details:", err);
+        return res.status(500).json({
+            error: "SQL Error",
+            message: err.message
+        });
+    }
         res.json(result.rows);
     });
 });
@@ -137,15 +137,15 @@ app.get('/salon/:id_salon', (req, res) => {
 
 app.post('/salon', checkAuth, (req, res) => {
     const { name, services, city, m_range_price, review, working_h, status, img } = req.body;
-    
+
     // Validate required fields
     if (!name || !services || !city || !m_range_price || !review || !working_h || !status || !img) {
         return res.status(400).json({ error: "All fields are required" });
     }
-    
+
     const servicesArray = services.split(',').map(s => s.trim());
     const workingHoursJson = JSON.stringify(working_h);
-    
+
     pool.query("INSERT INTO salon (name, services, city, m_range_price, review, working_h, status, img) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
         [name, servicesArray, city, m_range_price, parseFloat(review), workingHoursJson, status, img],
         (err, result) => {
@@ -153,33 +153,38 @@ app.post('/salon', checkAuth, (req, res) => {
                 console.error("SQL Error:", err);
                 return res.status(500).json({ error: "Database error: " + err.message });
             }
-            res.status(201).json({ 
-                message: "Salon created successfully", 
-                salon: result.rows[0] 
+            res.status(201).json({
+                message: "Salon created successfully",
+                salon: result.rows[0]
             });
         }
     );
 });
 
-app.put('/salon/:id_salon', (req, res) => {
+app.put('/salon/:id_salon', checkAuth, (req, res) => {
     const salonId = req.params.id_salon;
     const { name, services, city, m_range_price, review, working_h, status, img } = req.body;
+
+    const servicesArray = services.split(',').map(s => s.trim());
+    const workingHoursJson = JSON.stringify(working_h);
+
     pool.query(`UPDATE salon SET name = $1, services = $2, city = $3, m_range_price = $4, review = $5, working_h = $6, status = $7, img = $8
-             WHERE id_salon = $9`, [name, services, city, m_range_price, review, working_h, status, img, salonId],
+             WHERE id_salon = $9`,
+        [name, servicesArray, city, m_range_price, parseFloat(review), workingHoursJson, status, img, salonId],
         (err, result) => {
             if (err) {
                 console.error("SQL Error:", err);
                 return res.status(500).json({ error: "Database error" });
             }
-            res.status(201).json({ 
-                message: "Salon updated successfully", 
-                salon: result.rows[0] 
+            res.status(201).json({
+                message: "Salon updated successfully",
+                salon: result.rows[0]
             });
         }
     );
 });
 
-app.delete('/salon/:id_salon', async (req, res) => {
+app.delete('/salon/:id_salon', checkAuth, async (req, res) => {
     try {
         const salonId = req.params.id_salon;
         const checkResult = await pool.query(
@@ -199,7 +204,7 @@ app.delete('/salon/:id_salon', async (req, res) => {
         res.json({
             success: true,
             message: "Salon deleted successfully"
-        }); 
+        });
     } catch (err) {
         console.error("Delete error:", err);
         res.status(500).json({
@@ -214,7 +219,7 @@ app.delete('/salon/:id_salon', async (req, res) => {
 // ajouter fav_salon
 app.post("/fav_salon/:id_salon", checkAuth, (req, res) => {
     const salonId = req.params.id_salon;
-    const userId = req.user.id_user; 
+    const userId = req.user.id_user;
 
     const sql = "INSERT INTO fav_salon (id_user, id_salon) VALUES ($1, $2) ON CONFLICT DO NOTHING";
     pool.query(sql, [userId, salonId], (err) => {
@@ -225,7 +230,7 @@ app.post("/fav_salon/:id_salon", checkAuth, (req, res) => {
 
 // Récupérer mes salons favoris
 app.get("/fav_salon", checkAuth, (req, res) => {
-    const userId = req.user.id_user; 
+    const userId = req.user.id_user;
     const sql = `
         SELECT salon.* FROM salon 
         JOIN fav_salon ON salon.id_salon = fav_salon.id_salon 
@@ -240,7 +245,7 @@ app.get("/fav_salon", checkAuth, (req, res) => {
 // Annuler un fav_salon 
 app.delete("/fav_salon/:id_salon", checkAuth, (req, res) => {
     const salonId = req.params.id_salon;
-    const userId = req.user.id_user; 
+    const userId = req.user.id_user;
 
     const sql = "DELETE FROM fav_salon WHERE id_user = $1 AND id_salon = $2";
     pool.query(sql, [userId, salonId], (err, result) => {
