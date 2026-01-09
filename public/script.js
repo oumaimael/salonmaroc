@@ -16,10 +16,10 @@ const menuToggle = document.getElementById("menuToggle");
 const navLinks = document.getElementById("navLinks");
 
 if (menuToggle && navLinks) {
-    menuToggle.addEventListener("click", function() {
+    menuToggle.addEventListener("click", function () {
         this.classList.toggle("active");
         navLinks.classList.toggle("active");
-        
+
         // Toggle body scroll when menu is open
         if (navLinks.classList.contains("active")) {
             document.body.style.overflow = "hidden";
@@ -27,7 +27,7 @@ if (menuToggle && navLinks) {
             document.body.style.overflow = "";
         }
     });
-    
+
     // Close menu when clicking on a link
     const navLinksItems = navLinks.querySelectorAll("a, button");
     navLinksItems.forEach(item => {
@@ -56,9 +56,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 async function loadConfig() {
-    const response = await fetch(`${API_BASE_URL}/config`);
-    if (!response.ok) throw new Error("Failed to fetch config");
-    return response.json();
+    try {
+        const response = await fetch(`${API_BASE_URL}/config`);
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to fetch config: ${response.status} ${response.statusText} - ${errorText}`);
+        }
+        return response.json();
+    } catch (error) {
+        console.error("Config fetch error:", error);
+        throw error;
+    }
 }
 
 //Popup Utility Function
@@ -312,19 +320,19 @@ function setupEventListeners() {
         }
     });
 
-        
+
     // Page navigation listeners
     document.querySelectorAll('.nav-link').forEach(link => {
         // Skip buttons
         if (link.tagName === 'BUTTON') return;
-        
+
         link.addEventListener('click', (e) => {
             e.preventDefault();
             const pageName = link.textContent.toLowerCase();
             showPage(pageName);
         });
     });
-    
+
     // Handle logo click
     const logoLink = document.querySelector('.nav-logo a');
     if (logoLink) {
@@ -333,13 +341,13 @@ function setupEventListeners() {
             showPage('home');
         });
     }
-    
+
     // Contact form listener
     const contactForm = document.getElementById('contactForm');
     if (contactForm) {
         contactForm.addEventListener('submit', handleContactForm);
     }
-    
+
     // Show home page by default on load
     setTimeout(() => {
         showPage('home');
@@ -1129,12 +1137,12 @@ function showPage(pageName) {
     document.querySelectorAll('.page-content').forEach(page => {
         page.style.display = 'none';
     });
-    
+
     // Show selected page
     const pageElement = document.getElementById(pageName + 'Page');
     if (pageElement) {
         pageElement.style.display = 'block';
-        
+
         // If showing home page, ensure salon section is loaded
         if (pageName === 'home') {
             // Small delay to ensure DOM is ready
@@ -1145,19 +1153,19 @@ function showPage(pageName) {
             }, 100);
         }
     }
-    
+
     // Update active navigation link
     document.querySelectorAll('.nav-link').forEach(link => {
         link.classList.remove('active');
     });
-    
+
     // Set active link
     document.querySelectorAll('.nav-link').forEach(link => {
         if (link.textContent.toLowerCase() === pageName.toLowerCase()) {
             link.classList.add('active');
         }
     });
-    
+
     // Also activate the logo if it's a link to home
     const logoLink = document.querySelector('.nav-logo a');
     if (logoLink && pageName === 'home') {
@@ -1171,7 +1179,7 @@ function showPage(pageName) {
             homeLink.classList.add('active');
         }
     }
-    
+
     // Close mobile menu if open
     const menuToggle = document.getElementById('menuToggle');
     const navLinks = document.getElementById('navLinks');
@@ -1180,7 +1188,7 @@ function showPage(pageName) {
         navLinks.classList.remove('active');
         document.body.style.overflow = '';
     }
-    
+
     // Scroll to top when switching pages
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -1188,31 +1196,31 @@ function showPage(pageName) {
 // Contact Form 
 async function handleContactForm(e) {
     e.preventDefault();
-    
+
     const name = document.getElementById('contactName').value;
     const email = document.getElementById('contactEmail').value;
     const subject = document.getElementById('contactSubject').value;
     const message = document.getElementById('contactMessage').value;
-    
+
     // Basic validation
     if (!name || !email || !subject || !message) {
         showPopup('Please fill in all required fields.');
         return;
     }
-    
+
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
         showPopup('Please enter a valid email address.');
         return;
     }
-    
+
     // Disable submit button and show loading state
     const submitBtn = e.target.querySelector('button[type="submit"]');
     const originalText = submitBtn.textContent;
     submitBtn.textContent = 'Sending...';
     submitBtn.disabled = true;
-    
+
     try {
         // Send form data to server
         const response = await fetch(`${API_BASE_URL}/contact`, {
@@ -1222,9 +1230,9 @@ async function handleContactForm(e) {
             },
             body: JSON.stringify({ name, email, subject, message })
         });
-        
+
         const result = await response.json();
-        
+
         if (response.ok && result.success) {
             showPopup(result.message || 'Thank you for your message! We will get back to you soon.');
             document.getElementById('contactForm').reset();

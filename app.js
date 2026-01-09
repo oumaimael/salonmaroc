@@ -12,6 +12,10 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 5000;
 
+// Logging for Vercel startup
+console.log('Server initializing...');
+console.log('Environment:', process.env.NODE_ENV);
+
 // CORS Configuration
 const corsOptions = {
     origin: [
@@ -39,14 +43,25 @@ app.use(express.static('./public'));
 
 //--CONFIG FOR SUPABASE-- 
 app.get('/config', (req, res) => {
-    //for cors
-    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    //for supabase
-    res.json({
-        SUPABASE_URL: process.env.SUPABASE_URL,
-        SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY
-    });
+    try {
+        //for cors
+        res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+        res.header('Access-Control-Allow-Credentials', 'true');
+
+        // Check if env vars exist
+        if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+            console.warn('Warning: SUPABASE_URL or SUPABASE_ANON_KEY is missing');
+        }
+
+        //for supabase
+        res.json({
+            SUPABASE_URL: process.env.SUPABASE_URL || '',
+            SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || ''
+        });
+    } catch (error) {
+        console.error('Error in /config route:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
 });
 
 // --- CONFIGURE NODEMAILER ---
@@ -365,18 +380,14 @@ app.use(express.static('public'));
 // Handle SPA routing - serve index.html for all non-API routes
 app.get('*splat', (req, res) => {
     // Check if it's an API route
-    if (req.path.startsWith('/api') ||
-        req.path.startsWith('/salon') ||
-        req.path.startsWith('/users') ||
-        req.path.startsWith('/register') ||
-        req.path.startsWith('/fav_salon') ||
-        req.path.startsWith('/contact') ||
-        req.path.startsWith('/config')) {
+    const apiRoutes = ['/api', '/salon', '/users', '/register', '/fav_salon', '/contact', '/config'];
+    if (apiRoutes.some(route => req.path.startsWith(route))) {
         return res.status(404).json({ error: 'Endpoint not found' });
     }
 
     // Serve the frontend for all other routes
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    // Use process.cwd() for Vercel compatibility
+    res.sendFile(path.join(process.cwd(), 'public', 'index.html'));
 });
 
 // Export for Vercel serverless
@@ -390,7 +401,4 @@ if (require.main === module) {
     });
 }
 
-// Lancer le serveur
-app.listen(port, () => {
-    console.log(`Server active on port ${port}`);
 });

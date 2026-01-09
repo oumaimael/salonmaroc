@@ -6,23 +6,52 @@
       "use": "@vercel/node"
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "app.js"
+      "source": "/config",
+      "destination": "/app.js"
     },
     {
-      "src": "/(.*)",
-      "dest": "app.js"
+      "source": "/salon(.*)",
+      "destination": "/app.js"
+    },
+    {
+      "source": "/users(.*)",
+      "destination": "/app.js"
+    },
+    {
+      "source": "/register(.*)",
+      "destination": "/app.js"
+    },
+    {
+      "source": "/fav_salon(.*)",
+      "destination": "/app.js"
+    },
+    {
+      "source": "/contact",
+      "destination": "/app.js"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/app.js"
     }
   ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,PUT,DELETE,OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "X-Requested-With, Content-Type, Accept, Authorization" }
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET,POST,PUT,DELETE,OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "X-Requested-With, Content-Type, Accept, Authorization"
+        }
       ]
     }
   ]
