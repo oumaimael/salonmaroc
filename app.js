@@ -343,12 +343,20 @@ app.post("/fav_salon/:id_salon", checkAuth, (req, res) => {
     const salonId = req.params.id_salon;
     const userId = req.user.id_user;
 
-    pool.query(`INSERT INTO fav_salon (id_user, id_salon) VALUES ($1, $2) ON CONFLICT DO NOTHING`, [userId, salonId], (err) => {
-        if (err) return res.status(500).json({ error: "Error while adding salon" });
-        res.json({ message: "salon added to favorites with success!" });
-    });
+    pool.query(
+        `INSERT INTO fav_salon (id_user, id_salon) 
+         VALUES ($1, $2) 
+         ON CONFLICT (id_user, id_salon) DO NOTHING`,
+        [userId, salonId],
+        (err) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).json({ error: "Error while adding salon" });
+            }
+            res.json({ message: "salon added to favorites with success!" });
+        }
+    );
 });
-
 // Récupérer mes salons favoris
 app.get("/fav_salon", checkAuth, (req, res) => {
     const userId = req.user.id_user;
