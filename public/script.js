@@ -10,6 +10,7 @@ let userFavorites = []; // Store user's favorite salon IDs
 // Get the current domain
 const API_BASE_URL = window.location.origin;
 
+
 //toggle menu
 const menuToggle = document.getElementById("menuToggle");
 const navLinks = document.getElementById("navLinks");
@@ -240,12 +241,10 @@ function setupEventListeners() {
         signupForm.addEventListener("submit", handleSignup);
     }
 
-    // User Display - Show Favorites Modal
     if (userDisplay) {
         userDisplay.addEventListener("click", openFavoritesModal);
     }
 
-    // Favorites Modal listeners
     const closeFavoritesBtn = document.getElementById("closeFavoritesBtn");
     if (closeFavoritesBtn) {
         closeFavoritesBtn.addEventListener("click", closeFavoritesModal);

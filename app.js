@@ -363,7 +363,7 @@ app.delete("/fav_salon/:id_salon", checkAuth, (req, res) => {
 app.use(express.static('public'));
 
 // Handle SPA routing - serve index.html for all non-API routes
-app.get('*', (req, res) => {
+app.get('*splat', (req, res) => {
     // Check if it's an API route
     if (req.path.startsWith('/api') ||
         req.path.startsWith('/salon') ||
