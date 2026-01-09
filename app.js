@@ -186,11 +186,11 @@ app.post('/users', (req, res) => {
 
             if (isMatch) {
                 const token = jwt.sign(
-                    { userId: user.id_user, username: user.username },
+                    { id_user: user.id_user, username: user.username }, 
                     process.env.JWT_SECRET,
                     { expiresIn: '2h' }
                 );
-
+    
                 res.json({
                     message: "Login successful",
                     token: token,
