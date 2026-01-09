@@ -6,34 +6,10 @@
       "use": "@vercel/node"
     }
   ],
-  "rewrites": [
+  "routes": [
     {
-      "source": "/config",
-      "destination": "/app.js"
-    },
-    {
-      "source": "/salon(.*)",
-      "destination": "/app.js"
-    },
-    {
-      "source": "/users(.*)",
-      "destination": "/app.js"
-    },
-    {
-      "source": "/register(.*)",
-      "destination": "/app.js"
-    },
-    {
-      "source": "/fav_salon(.*)",
-      "destination": "/app.js"
-    },
-    {
-      "source": "/contact",
-      "destination": "/app.js"
-    },
-    {
-      "source": "/api/(.*)",
-      "destination": "/app.js"
+      "src": "/(.*)",
+      "dest": "app.js"
     }
   ],
   "headers": [
