@@ -12,6 +12,19 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 5000;
 
+// CORS Configuration
+const corsOptions = {
+    origin: [
+        'https://salonmaroc.vercel.app',
+        'http://localhost:5000'
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
+
 // --- CONNEXION POSTGRESQL (SUPABASE) ---
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -26,6 +39,10 @@ app.use(express.static('./public'));
 
 //--CONFIG FOR SUPABASE-- 
 app.get('/config', (req, res) => {
+    //for cors
+    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    //for supabase
     res.json({
         SUPABASE_URL: process.env.SUPABASE_URL,
         SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY
@@ -347,19 +364,19 @@ app.use(express.static('public'));
 
 // Handle SPA routing - serve index.html for all non-API routes
 app.get('*', (req, res) => {
-  // Check if it's an API route
-  if (req.path.startsWith('/api') || 
-      req.path.startsWith('/salon') || 
-      req.path.startsWith('/users') || 
-      req.path.startsWith('/register') || 
-      req.path.startsWith('/fav_salon') || 
-      req.path.startsWith('/contact') || 
-      req.path.startsWith('/config')) {
-    return res.status(404).json({ error: 'Endpoint not found' });
-  }
-  
-  // Serve the frontend for all other routes
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    // Check if it's an API route
+    if (req.path.startsWith('/api') ||
+        req.path.startsWith('/salon') ||
+        req.path.startsWith('/users') ||
+        req.path.startsWith('/register') ||
+        req.path.startsWith('/fav_salon') ||
+        req.path.startsWith('/contact') ||
+        req.path.startsWith('/config')) {
+        return res.status(404).json({ error: 'Endpoint not found' });
+    }
+
+    // Serve the frontend for all other routes
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Export for Vercel serverless
@@ -367,10 +384,10 @@ module.exports = app;
 
 // Only run the server locally (not on Vercel)
 if (require.main === module) {
-  const port = process.env.PORT || 5000;
-  app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
-  });
+    const port = process.env.PORT || 5000;
+    app.listen(port, () => {
+        console.log(`Server running on port ${port}`);
+    });
 }
 
 // Lancer le serveur
