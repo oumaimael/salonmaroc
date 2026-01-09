@@ -7,6 +7,9 @@ const itemsPerPage = 6;
 let allSalonsData = [];
 let userFavorites = []; // Store user's favorite salon IDs
 
+// Get the current domain
+const API_BASE_URL = window.location.origin;
+
 //toggle menu
 const menuToggle = document.getElementById("menuToggle");
 const navLinks = document.getElementById("navLinks");
@@ -52,7 +55,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 async function loadConfig() {
-    const response = await fetch("/config");
+    const response = await fetch(`${API_BASE_URL}/config`);
     if (!response.ok) throw new Error("Failed to fetch config");
     return response.json();
 }
@@ -362,7 +365,7 @@ async function loadUserFavorites() {
     }
 
     try {
-        const response = await fetch('/fav_salon', {
+        const response = await fetch(`${API_BASE_URL}/fav_salon`, {
             method: "GET",
             headers: {
                 "Authorization": `Bearer ${authToken}`
@@ -390,7 +393,7 @@ async function loadSalons() {
         // Load favorites first if user is logged in
         await loadUserFavorites();
 
-        const response = await fetch('/salon');
+        const response = await fetch(`${API_BASE_URL}/salon`);
 
         if (!response.ok) {
             throw new Error("Failed to fetch salons");
@@ -547,7 +550,7 @@ async function AddSalon(e) {
     };
 
     try {
-        const response = await fetch("/salon", {
+        const response = await fetch(`${API_BASE_URL}/salon`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -581,7 +584,7 @@ function editSalon(salonId) {
     }
 
     // Fetch the salon data
-    fetch(`/salon/${salonId}`)
+    fetch(`${API_BASE_URL}/salon/${salonId}`)
         .then(response => response.json())
         .then(data => {
             if (data && data.length > 0) {
@@ -625,7 +628,7 @@ function editSalon(salonId) {
                     };
 
                     try {
-                        const response = await fetch(`/salon/${salonId}`, {
+                        const response = await fetch(`${API_BASE_URL}/salon/${salonId}`, {
                             method: "PUT",
                             headers: {
                                 "Content-Type": "application/json",
@@ -678,7 +681,7 @@ function deleteSalon(salonId) {
             return;
         }
 
-        fetch(`/salon/${salonId}`, {
+        fetch(`${API_BASE_URL}/salon/${salonId}`, {
             method: "DELETE",
             headers: {
                 "Authorization": `Bearer ${authToken}`
@@ -714,7 +717,7 @@ async function toggleFavorite(salonId) {
     try {
         if (isFavorited) {
             // Remove from favorites
-            const response = await fetch(`/fav_salon/${salonId}`, {
+            const response = await fetch(`${API_BASE_URL}/fav_salon/${salonId}`, {
                 method: "DELETE",
                 headers: {
                     "Authorization": `Bearer ${authToken}`
@@ -734,7 +737,7 @@ async function toggleFavorite(salonId) {
             }
         } else {
             // Add to favorites
-            const response = await fetch(`/fav_salon/${salonId}`, {
+            const response = await fetch(`${API_BASE_URL}/fav_salon/${salonId}`, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${authToken}`
@@ -775,7 +778,7 @@ async function openFavoritesModal() {
 
     try {
         // Fetch user's favorite salons
-        const response = await fetch('/fav_salon', {
+        const response = await fetch(`${API_BASE_URL}/fav_salon`, {
             method: "GET",
             headers: {
                 "Authorization": `Bearer ${authToken}`
@@ -841,7 +844,7 @@ async function removeFavoriteFromModal(salonId) {
     }
 
     try {
-        const response = await fetch(`/fav_salon/${salonId}`, {
+        const response = await fetch(`${API_BASE_URL}/fav_salon/${salonId}`, {
             method: "DELETE",
             headers: {
                 "Authorization": `Bearer ${authToken}`
@@ -960,7 +963,7 @@ async function handleLogin(e) {
     }
 
     try {
-        const response = await fetch("/users", {
+        const response = await fetch(`${API_BASE_URL}/users`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -1003,7 +1006,7 @@ async function handleSignup(e) {
     }
 
     try {
-        const response = await fetch("/register", {
+        const response = await fetch(`${API_BASE_URL}/register`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -1213,7 +1216,7 @@ async function handleContactForm(e) {
     
     try {
         // Send form data to server
-        const response = await fetch('/contact', {
+        const response = await fetch(`${API_BASE_URL}/contact`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
